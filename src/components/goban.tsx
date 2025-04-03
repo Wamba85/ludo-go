@@ -73,29 +73,25 @@ function Goban() {
   const [message, setMessage] = useState<string>('');
   const [showLiberties, setShowLiberties] = useState<boolean>(true);
   const [showCoordinates, setShowCoordinates] = useState<boolean>(true);
-  // I prigionieri vengono conteggiati in base alle pietre catturate:
-  // Se il giocatore Nero cattura pietre bianche, si incrementa prisonersBlack
-  // Se il giocatore Bianco cattura pietre nere, si incrementa prisonersWhite
   const [prisonersBlack, setPrisonersBlack] = useState<number>(0);
   const [prisonersWhite, setPrisonersWhite] = useState<number>(0);
 
   const handleClick = (row: number, col: number): void => {
+    // Se l'intersezione è già occupata, non fare nulla
     if (board[row][col] !== 0) {
       setMessage('Mossa non valida: intersezione occupata');
       return;
     }
 
-    // Copia il board e piazza la pietra
+    // Crea una copia del board e piazza la pietra
     const newBoard = board.map((r, i) =>
       r.map((cell, j) => (i === row && j === col ? currentPlayer : cell)),
     );
 
-    // Salviamo il colore del giocatore che sta giocando (quello che sta piazzando)
     const movingColor = currentPlayer;
-    // Il colore dell'avversario
     const opponentColor = movingColor === 1 ? 2 : 1;
 
-    // Funzione ausiliaria per rimuovere una catena dal board
+    // Funzione per rimuovere una catena dal board
     const removeChain = (chain: Set<string>) => {
       chain.forEach((pos) => {
         const [r, c] = pos.split(',').map(Number);
@@ -103,7 +99,7 @@ function Goban() {
       });
     };
 
-    // Controlla e cattura le catene avversarie adiacenti se hanno 0 libertà
+    // Controlla le catene avversarie adiacenti e cattura quelle con 0 libertà
     let capturedCount = 0;
     const processed = new Set<string>();
     const directions = [
@@ -130,41 +126,38 @@ function Goban() {
       }
     }
 
-    // Aggiorna i prigionieri per il giocatore che ha mosso
-    if (movingColor === 1) {
-      setPrisonersBlack(prisonersBlack + capturedCount);
-    } else {
-      setPrisonersWhite(prisonersWhite + capturedCount);
-    }
-
-    // Verifica se la mossa ha causato un suicidio: la catena appena piazzata (o collegata) ha 0 libertà
-    const { chain: ownChain, liberties: ownLiberties } = getChainAndLiberties(
+    // Verifica la regola di suicidio: se non si è catturata alcuna catena avversaria e la catena
+    // propria (a cui appartiene la nuova pietra) ha 0 libertà, la mossa è illegale.
+    const { liberties: ownLiberties } = getChainAndLiberties(
       row,
       col,
       newBoard,
     );
-    if (ownLiberties === 0) {
-      removeChain(ownChain);
-      // Se il giocatore ha perso le proprie pietre, l'avversario riceve il merito
+    if (capturedCount === 0 && ownLiberties === 0) {
+      setMessage('Mossa non valida: suicidio');
+      return;
+    }
+
+    // Se si è catturato almeno una pietra, aggiorna il conteggio dei prigionieri
+    if (capturedCount > 0) {
       if (movingColor === 1) {
-        setPrisonersWhite(prisonersWhite + ownChain.size);
+        setPrisonersBlack(prisonersBlack + capturedCount);
       } else {
-        setPrisonersBlack(prisonersBlack + ownChain.size);
+        setPrisonersWhite(prisonersWhite + capturedCount);
       }
     }
 
-    // Aggiorna lo stato del board e passa il turno (anche in caso di mossa suicida)
+    // Aggiorna lo state del board e passa il turno
     setBoard(newBoard);
     setCurrentPlayer(movingColor === 1 ? 2 : 1);
     setMessage('');
   };
 
-  // Calcola le dimensioni in pixel del goban
   const boardPixelSize = (BOARD_SIZE - 1) * CELL_SIZE;
   const svgWidth = boardPixelSize + MARGIN * 2;
   const svgHeight = boardPixelSize + MARGIN * 2;
 
-  // Per il rendering, calcoliamo anche le catene e le libertà per mostrare il conteggio
+  // Calcola le catene e le libertà per il rendering (per mostrare il conteggio sulle pietre rappresentanti)
   const chainMap = new Map<string, number>();
   const visited = new Set<string>();
   for (let i = 0; i < BOARD_SIZE; i++) {
@@ -289,7 +282,7 @@ function Goban() {
               </text>
             );
           })}
-        {/* Linee orizzontali */}
+        {/* Disegna le linee orizzontali */}
         {Array.from({ length: BOARD_SIZE }).map((_, i) => {
           const pos = MARGIN + i * CELL_SIZE;
           return (
@@ -303,7 +296,7 @@ function Goban() {
             />
           );
         })}
-        {/* Linee verticali */}
+        {/* Disegna le linee verticali */}
         {Array.from({ length: BOARD_SIZE }).map((_, j) => {
           return (
             <line
