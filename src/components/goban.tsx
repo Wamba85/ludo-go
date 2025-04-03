@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 
 const BOARD_SIZE = 9; // Può essere 9, 13, 19, ecc.
 const CELL_SIZE = 40; // Distanza in pixel tra le intersezioni
+const MARGIN = 60; // Margine per le coordinate intorno al goban
 
 // Crea il board iniziale come matrice BOARD_SIZE x BOARD_SIZE, tutte intersezioni vuote (0)
 const createInitialBoard = (size: number): number[][] =>
@@ -10,8 +11,22 @@ const createInitialBoard = (size: number): number[][] =>
     .fill(null)
     .map(() => Array(size).fill(0));
 
-// Funzione che, partendo da una pietra in (row, col), raccoglie la catena di pietre adiacenti (stesso colore)
-// e calcola le libertà (intersezioni vuote adiacenti univoche) di tutta la catena.
+// Genera le lettere per le colonne, saltando la "I"
+function getColumnLabels(size: number): string[] {
+  const labels: string[] = [];
+  let charCode = 65; // 'A'
+  while (labels.length < size) {
+    const letter = String.fromCharCode(charCode);
+    if (letter !== 'I') {
+      labels.push(letter);
+    }
+    charCode++;
+  }
+  return labels;
+}
+
+// Funzione che, partendo da una pietra in (row, col), raccoglie la catena (stesso colore)
+// e calcola le libertà uniche (intersezioni vuote adiacenti in 4 direzioni).
 function getChainAndLiberties(
   row: number,
   col: number,
@@ -56,9 +71,11 @@ function Goban() {
   );
   const [currentPlayer, setCurrentPlayer] = useState<number>(1); // 1 = Nero, 2 = Bianco
   const [message, setMessage] = useState<string>('');
+  const [showLiberties, setShowLiberties] = useState<boolean>(true);
+  const [showCoordinates, setShowCoordinates] = useState<boolean>(true);
 
   const handleClick = (row: number, col: number): void => {
-    // Se l'intersezione è occupata, non fare nulla
+    // Se l'intersezione è già occupata, non fare nulla
     if (board[row][col] !== 0) {
       setMessage('Mossa non valida: intersezione occupata');
       return;
@@ -74,10 +91,11 @@ function Goban() {
 
   // Calcola la dimensione in pixel della griglia (dalla prima all'ultima intersezione)
   const boardPixelSize = (BOARD_SIZE - 1) * CELL_SIZE;
+  const svgWidth = boardPixelSize + MARGIN * 2;
+  const svgHeight = boardPixelSize + MARGIN * 2;
 
   // Calcola le catene e le libertà associate.
-  // chainMap: mappa in cui la chiave è una stringa "row,col" che identifica la pietra rappresentante
-  // della catena e il valore è il numero totale di libertà della catena.
+  // chainMap: chiave = "row,col" della pietra rappresentante (più in alto a sinistra) e valore = libertà della catena.
   const chainMap = new Map<string, number>();
   const visited = new Set<string>();
 
@@ -102,24 +120,116 @@ function Goban() {
     }
   }
 
+  // Genera le etichette per le colonne (lettere, saltando "I")
+  const columnLabels = getColumnLabels(BOARD_SIZE);
+
   return (
     <div>
       <h2>Goban Interattivo</h2>
       <p>Turno: {currentPlayer === 1 ? 'Nero' : 'Bianco'}</p>
+      <div style={{ marginBottom: '10px' }}>
+        <label style={{ marginRight: '20px' }}>
+          <input
+            type="checkbox"
+            checked={showLiberties}
+            onChange={(e) => setShowLiberties(e.target.checked)}
+          />{' '}
+          Mostra libertà delle catene
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={showCoordinates}
+            onChange={(e) => setShowCoordinates(e.target.checked)}
+          />{' '}
+          Mostra coordinate
+        </label>
+      </div>
       <svg
-        width={boardPixelSize + 20} // Margine di 10px su ogni lato
-        height={boardPixelSize + 20}
-        style={{ backgroundColor: '#f0d9b5', margin: '20px' }}
+        width={svgWidth}
+        height={svgHeight}
+        style={{ backgroundColor: '#f0d9b5' }}
       >
+        {/* Coordinate superiore (lettere) */}
+        {showCoordinates &&
+          columnLabels.map((label, j) => {
+            const x = MARGIN + j * CELL_SIZE;
+            const y = MARGIN - 30;
+            return (
+              <text
+                key={`top-${j}`}
+                x={x}
+                y={y}
+                textAnchor="middle"
+                fontSize="20px"
+              >
+                {label}
+              </text>
+            );
+          })}
+        {/* Coordinate inferiore (lettere) */}
+        {showCoordinates &&
+          columnLabels.map((label, j) => {
+            const x = MARGIN + j * CELL_SIZE;
+            const y = MARGIN + boardPixelSize + 30;
+            return (
+              <text
+                key={`bottom-${j}`}
+                x={x}
+                y={y}
+                textAnchor="middle"
+                fontSize="20px"
+              >
+                {label}
+              </text>
+            );
+          })}
+        {/* Coordinate sinistra (numeri) */}
+        {showCoordinates &&
+          Array.from({ length: BOARD_SIZE }).map((_, i) => {
+            const x = MARGIN - 30;
+            // I numeri vanno dal basso verso l'alto: per riga i, il numero è BOARD_SIZE - i
+            const label = (BOARD_SIZE - i).toString();
+            const y = MARGIN + i * CELL_SIZE + 4;
+            return (
+              <text
+                key={`left-${i}`}
+                x={x}
+                y={y}
+                textAnchor="end"
+                fontSize="20px"
+              >
+                {label}
+              </text>
+            );
+          })}
+        {/* Coordinate destra (numeri) */}
+        {showCoordinates &&
+          Array.from({ length: BOARD_SIZE }).map((_, i) => {
+            const x = MARGIN + boardPixelSize + 30;
+            const label = (BOARD_SIZE - i).toString();
+            const y = MARGIN + i * CELL_SIZE + 4;
+            return (
+              <text
+                key={`right-${i}`}
+                x={x}
+                y={y}
+                textAnchor="start"
+                fontSize="20px"
+              >
+                {label}
+              </text>
+            );
+          })}
         {/* Disegna le linee orizzontali */}
         {Array.from({ length: BOARD_SIZE }).map((_, i) => {
-          const pos = 10 + i * CELL_SIZE;
+          const pos = MARGIN + i * CELL_SIZE;
           return (
             <line
               key={`h-${i}`}
-              x1={10}
+              x1={MARGIN}
               y1={pos}
-              x2={10 + boardPixelSize}
+              x2={MARGIN + boardPixelSize}
               y2={pos}
               stroke="black"
             />
@@ -127,29 +237,29 @@ function Goban() {
         })}
         {/* Disegna le linee verticali */}
         {Array.from({ length: BOARD_SIZE }).map((_, j) => {
-          const pos = 10 + j * CELL_SIZE;
+          // const pos = MARGIN + j * CELL_SIZE;
           return (
             <line
               key={`v-${j}`}
-              x1={pos}
-              y1={10}
-              x2={pos}
-              y2={10 + boardPixelSize}
+              x1={MARGIN + j * CELL_SIZE}
+              y1={MARGIN}
+              x2={MARGIN + j * CELL_SIZE}
+              y2={MARGIN + boardPixelSize}
               stroke="black"
             />
           );
         })}
-        {/* Crea le aree cliccabili per ogni intersezione */}
+        {/* Aree cliccabili per ogni intersezione */}
         {board.map((row, i) =>
           row.map((_, j) => {
-            const cx = 10 + j * CELL_SIZE;
-            const cy = 10 + i * CELL_SIZE;
+            const cx = MARGIN + j * CELL_SIZE;
+            const cy = MARGIN + i * CELL_SIZE;
             return (
               <circle
                 key={`click-${i}-${j}`}
                 cx={cx}
                 cy={cy}
-                r={CELL_SIZE / 2} // Area sufficientemente grande per il click
+                r={CELL_SIZE / 2}
                 fill="transparent"
                 onClick={() => handleClick(i, j)}
                 style={{ cursor: 'pointer' }}
@@ -157,12 +267,12 @@ function Goban() {
             );
           }),
         )}
-        {/* Disegna le pietre. Se la pietra è rappresentante di una catena, mostra le libertà totali della catena */}
+        {/* Disegna le pietre e, se attivato, il conteggio delle libertà per la catena */}
         {board.map((row, i) =>
           row.map((cell, j) => {
             if (cell === 0) return null;
-            const cx = 10 + j * CELL_SIZE;
-            const cy = 10 + i * CELL_SIZE;
+            const cx = MARGIN + j * CELL_SIZE;
+            const cy = MARGIN + i * CELL_SIZE;
             const stoneRadius = CELL_SIZE / 2 - 2;
             const key = `${i},${j}`;
             const liberties = chainMap.get(key);
@@ -175,11 +285,10 @@ function Goban() {
                   fill={cell === 1 ? 'black' : 'white'}
                   stroke="black"
                 />
-                {/* Visualizza il numero di libertà solo se questa pietra è il rappresentante della catena */}
-                {liberties !== undefined && (
+                {showLiberties && liberties !== undefined && (
                   <text
                     x={cx}
-                    y={cy + 4} // Centra verticalmente il testo
+                    y={cy + 4}
                     textAnchor="middle"
                     fill={cell === 1 ? 'white' : 'black'}
                     fontSize="12px"
