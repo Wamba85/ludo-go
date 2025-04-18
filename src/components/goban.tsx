@@ -1,48 +1,53 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
-/**
- * Goban interattivo con albero delle mosse orizzontale.
- *
- * Props:
- *  - `BOARD_SIZE` (number)   Dimensione del goban (9/13/19). Default 9.
- *  - `showMoveTree` (boolean) Se true mostra l'albero delle mosse a destra del goban.
- */
+/* ---------- tipi ---------- */
 interface GobanProps {
   BOARD_SIZE?: number;
   showMoveTree?: boolean;
 }
 
-const CELL_SIZE = 40; // distanza in px fra intersezioni
-const MARGIN = 60; // margine del goban
-const NODE_RADIUS = 15; // raggio dei cerchi nell’albero mosse
-const NODE_SPACING = 70; // distanza orizzontale fra nodi
-const MOVE_TREE_MARGIN = 20; // margine interno albero mosse
+type MoveNode = {
+  id: number;
+  row: number;
+  col: number;
+  player: number; // 1 nero, 2 bianco
+  parent: MoveNode | null;
+  children: MoveNode[];
+  branch: number; // indice riga nell’albero
+  depth: number; // colonna (numero di mossa‑1)
+};
 
-// Crea il board iniziale
-const createInitialBoard = (size: number): number[][] =>
-  Array.from({ length: size }, () => Array(size).fill(0));
+/* ---------- costanti ---------- */
+const CELL_SIZE = 40;
+const MARGIN = 60;
+const NODE_RADIUS = 15;
+const COL_SPACING = 70; // distanza orizzontale nodi
+const ROW_SPACING = 50; // distanza verticale rami
+const TREE_MARGIN = 20;
 
-// Genera le lettere per le colonne, saltando la I
-function getColumnLabels(size: number): string[] {
+/* ---------- utilità ---------- */
+const createInitialBoard = (n: number) =>
+  Array.from({ length: n }, () => Array(n).fill(0));
+
+const getColumnLabels = (size: number) => {
   const labels: string[] = [];
-  for (let code = 65; labels.length < size; code++) {
-    const letter = String.fromCharCode(code);
-    if (letter !== 'I') labels.push(letter);
+  for (let c = 65; labels.length < size; c++) {
+    const l = String.fromCharCode(c);
+    if (l !== 'I') labels.push(l);
   }
   return labels;
-}
+};
 
-// Calcola catena e libertà
 function getChainAndLiberties(
   row: number,
   col: number,
   board: number[][],
-  BOARD_SIZE: number,
-): { chain: Set<string>; liberties: number } {
+  size: number,
+) {
   const color = board[row][col];
   const chain = new Set<string>();
-  const liberties = new Set<string>();
+  const libs = new Set<string>();
   const stack: [number, number][] = [[row, col]];
   const dirs = [
     [-1, 0],
@@ -60,122 +65,171 @@ function getChainAndLiberties(
     for (const [dr, dc] of dirs) {
       const nr = r + dr,
         nc = c + dc;
-      if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
-        if (board[nr][nc] === 0) liberties.add(`${nr},${nc}`);
+      if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
+        if (board[nr][nc] === 0) libs.add(`${nr},${nc}`);
         else if (board[nr][nc] === color) stack.push([nr, nc]);
       }
     }
   }
-  return { chain, liberties: liberties.size };
+  return { chain, liberties: libs.size };
 }
 
+/* ---------- componente ---------- */
 export default function Goban({
   BOARD_SIZE = 9,
-  showMoveTree = false,
+  showMoveTree = true,
 }: GobanProps) {
+  /* ---- struttura albero mosse ---- */
+  const root = useRef<MoveNode>({
+    id: 0,
+    row: -1,
+    col: -1,
+    player: 2, // così il primo giocatore è 1
+    parent: null,
+    children: [],
+    branch: 0,
+    depth: -1,
+  }).current;
+  const [currentNode, setCurrentNode] = useState<MoveNode>(root);
+  const nextId = useRef(1);
+  const nextBranch = useRef(1); // 0 = mainline
+
+  /* ---- stato goban e prigionieri ---- */
   const [board, setBoard] = useState(createInitialBoard(BOARD_SIZE));
-  const [currentPlayer, setCurrentPlayer] = useState(1); // 1 = Nero, 2 = Bianco
+  const [prisonersBlack, setPrisonersBlack] = useState(0);
+  const [prisonersWhite, setPrisonersWhite] = useState(0);
   const [message, setMessage] = useState('');
   const [showLiberties, setShowLiberties] = useState(true);
   const [showCoordinates, setShowCoordinates] = useState(true);
-  const [prisonersBlack, setPrisonersBlack] = useState(0);
-  const [prisonersWhite, setPrisonersWhite] = useState(0);
-  const [moves, setMoves] = useState<
-    { row: number; col: number; player: number }[]
-  >([]);
 
-  /* ----------------------- gestione click sul goban ----------------------- */
-  const handleClick = (row: number, col: number) => {
-    if (board[row][col] !== 0) {
-      setMessage('Mossa non valida: intersezione occupata');
-      return;
-    }
+  /* ---- ricostruzione board quando cambia currentNode ---- */
+  useEffect(() => {
+    const b = createInitialBoard(BOARD_SIZE);
+    let blackPr = 0,
+      whitePr = 0;
 
-    const newBoard = board.map((r, i) =>
-      r.map((cell, j) => (i === row && j === col ? currentPlayer : cell)),
-    );
+    // risaliamo fino alla radice, poi riproduciamo le mosse
+    const path: MoveNode[] = [];
+    for (let n: MoveNode | null = currentNode; n && n !== root; n = n.parent)
+      path.unshift(n);
 
-    const movingColor = currentPlayer;
-    const opponentColor = movingColor === 1 ? 2 : 1;
+    path.forEach((mv) => {
+      // se intersezione già occupata (può succedere con rami), ignora la mossa
+      if (b[mv.row][mv.col] !== 0) return;
 
-    const removeChain = (chain: Set<string>) => {
-      chain.forEach((pos) => {
-        const [r, c] = pos.split(',').map(Number);
-        newBoard[r][c] = 0;
-      });
-    };
+      const player = mv.player;
+      b[mv.row][mv.col] = player;
+      const opp = player === 1 ? 2 : 1;
 
-    // catture adiacenti
-    let captured = 0;
-    const dirs = [
-      [-1, 0],
-      [1, 0],
-      [0, -1],
-      [0, 1],
-    ];
-    const processed = new Set<string>();
-    for (const [dr, dc] of dirs) {
-      const nr = row + dr,
-        nc = col + dc;
-      if (
-        nr >= 0 &&
-        nr < BOARD_SIZE &&
-        nc >= 0 &&
-        nc < BOARD_SIZE &&
-        newBoard[nr][nc] === opponentColor &&
-        !processed.has(`${nr},${nc}`)
-      ) {
-        const { chain, liberties } = getChainAndLiberties(
-          nr,
-          nc,
-          newBoard,
-          BOARD_SIZE,
-        );
-        if (liberties === 0) {
-          removeChain(chain);
-          captured += chain.size;
-          chain.forEach((p) => processed.add(p));
+      const removeChain = (ch: Set<string>) => {
+        ch.forEach((p) => {
+          const [r, c] = p.split(',').map(Number);
+          b[r][c] = 0;
+        });
+      };
+
+      const dirs = [
+        [-1, 0],
+        [1, 0],
+        [0, -1],
+        [0, 1],
+      ];
+      let captured = 0;
+      const done = new Set<string>();
+      for (const [dr, dc] of dirs) {
+        const nr = mv.row + dr,
+          nc = mv.col + dc;
+        if (
+          nr >= 0 &&
+          nr < BOARD_SIZE &&
+          nc >= 0 &&
+          nc < BOARD_SIZE &&
+          b[nr][nc] === opp &&
+          !done.has(`${nr},${nc}`)
+        ) {
+          const { chain, liberties } = getChainAndLiberties(
+            nr,
+            nc,
+            b,
+            BOARD_SIZE,
+          );
+          if (liberties === 0) {
+            removeChain(chain);
+            captured += chain.size;
+            chain.forEach((p) => done.add(p));
+          }
         }
       }
-    }
+      if (captured) {
+        if (player === 1) blackPr += captured;
+        else whitePr += captured;
+      }
+    });
 
-    // suicidio
-    const { liberties: ownLiberties } = getChainAndLiberties(
-      row,
-      col,
-      newBoard,
-      BOARD_SIZE,
+    setBoard(b);
+    setPrisonersBlack(blackPr);
+    setPrisonersWhite(whitePr);
+    setMessage('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentNode]);
+
+  /* ---- player corrente ---- */
+  const currentPlayer = currentNode.player === 1 ? 2 : 1;
+
+  /* ---- click sul goban ---- */
+  const handleClick = (row: number, col: number) => {
+    // se la mossa è identica ad un figlio esistente, segui quel ramo
+    const existing = currentNode.children.find(
+      (c) => c.row === row && c.col === col,
     );
-    if (captured === 0 && ownLiberties === 0) {
-      setMessage('Mossa non valida: suicidio');
+    if (existing) {
+      setCurrentNode(existing);
       return;
     }
 
-    if (captured > 0) {
-      if (movingColor === 1) {
-        setPrisonersBlack(prisonersBlack + captured);
-      } else {
-        setPrisonersWhite(prisonersWhite + captured);
-      }
-    }
+    // altrimenti crea nuovo ramo
+    const newBranch =
+      currentNode.children.length === 0
+        ? currentNode.branch
+        : nextBranch.current++;
 
-    setBoard(newBoard);
-    setCurrentPlayer(movingColor === 1 ? 2 : 1);
-    setMoves([...moves, { row, col, player: movingColor }]);
-    setMessage('');
+    const newNode: MoveNode = {
+      id: nextId.current++,
+      row,
+      col,
+      player: currentPlayer,
+      parent: currentNode,
+      children: [],
+      branch: newBranch,
+      depth: currentNode.depth + 1,
+    };
+    currentNode.children.push(newNode);
+    setCurrentNode(newNode);
   };
 
-  /* --------------------------- dimensioni goban --------------------------- */
+  /* ---- comandi navigazione ---- */
+  const toStart = () => setCurrentNode(root);
+  const back = () => currentNode.parent && setCurrentNode(currentNode.parent);
+  const forward = () =>
+    currentNode.children[0] && setCurrentNode(currentNode.children[0]);
+  const toEnd = () => {
+    let n = currentNode;
+    while (n.children[0]) n = n.children[0];
+    setCurrentNode(n);
+  };
+
+  /* ---------- layout goban ---------- */
   const boardPx = (BOARD_SIZE - 1) * CELL_SIZE;
   const svgWidth = boardPx + MARGIN * 2;
   const svgHeight = boardPx + MARGIN * 2;
+  const columnLabels = getColumnLabels(BOARD_SIZE);
 
-  /* ---------------------------- catene/libertà ---------------------------- */
+  /* ---------- catene/libertà (solo visuale) ---------- */
   const chainMap = new Map<string, number>();
   const visited = new Set<string>();
-  for (let r = 0; r < BOARD_SIZE; r++) {
-    for (let c = 0; c < BOARD_SIZE; c++) {
-      if (board[r][c] !== 0 && !visited.has(`${r},${c}`)) {
+  for (let r = 0; r < BOARD_SIZE; r++)
+    for (let c = 0; c < BOARD_SIZE; c++)
+      if (board[r][c] && !visited.has(`${r},${c}`)) {
         const { chain, liberties } = getChainAndLiberties(
           r,
           c,
@@ -191,38 +245,40 @@ export default function Goban({
         if (rep) chainMap.set(`${rep[0]},${rep[1]}`, liberties);
         chain.forEach((p) => visited.add(p));
       }
-    }
-  }
 
-  const columnLabels = getColumnLabels(BOARD_SIZE);
+  /* ---------- preparazione albero ---------- */
+  const nodes: MoveNode[] = [];
+  const dfs = (n: MoveNode) => {
+    if (n !== root) nodes.push(n);
+    n.children.forEach(dfs);
+  };
+  dfs(root);
 
-  /* --------------------------- dimensioni albero -------------------------- */
-  const moveTreeHeight = NODE_RADIUS * 2 + MOVE_TREE_MARGIN * 2;
-  const moveTreeWidth =
-    MOVE_TREE_MARGIN * 2 +
-    (moves.length > 0
-      ? (moves.length - 1) * NODE_SPACING + NODE_RADIUS * 2
-      : 0);
+  const maxDepth = nodes.reduce((m, n) => Math.max(m, n.depth), 0);
+  const maxBranch = nodes.reduce((m, n) => Math.max(m, n.branch), 0);
+  const treeWidth = TREE_MARGIN * 2 + maxDepth * COL_SPACING + NODE_RADIUS * 2;
+  const treeHeight =
+    TREE_MARGIN * 2 + maxBranch * ROW_SPACING + NODE_RADIUS * 2;
 
-  /* -------------------------------- render -------------------------------- */
+  /* ---------- render ---------- */
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20 }}>
-      {/* ------------------------------ GOBAN ----------------------------- */}
+      {/* ---------------- goban ---------------- */}
       <div>
-        <h2>Goban Interattivo</h2>
-        <p>Turno: {currentPlayer === 1 ? 'Nero' : 'Bianco'}</p>
+        <h3>Goban interattivo</h3>
         <p>
-          Prigionieri: Nero {prisonersBlack} • Bianco {prisonersWhite}
+          Turno: {currentPlayer === 1 ? 'Nero' : 'Bianco'} • Prigionieri → Nero{' '}
+          {prisonersBlack} ⁄ Bianco {prisonersWhite}
         </p>
-        {/* opzioni visualizzazione */}
-        <div style={{ marginBottom: 10 }}>
-          <label style={{ marginRight: 20 }}>
+        {/* opzioni */}
+        <div style={{ marginBottom: 8 }}>
+          <label style={{ marginRight: 16 }}>
             <input
               type="checkbox"
               checked={showLiberties}
               onChange={(e) => setShowLiberties(e.target.checked)}
             />{' '}
-            Mostra libertà
+            Libertà
           </label>
           <label>
             <input
@@ -230,22 +286,22 @@ export default function Goban({
               checked={showCoordinates}
               onChange={(e) => setShowCoordinates(e.target.checked)}
             />{' '}
-            Mostra coordinate
+            Coordinate
           </label>
         </div>
 
-        {/* --------------------------- SVG GOBAN --------------------------- */}
+        {/* svg goban */}
         <svg
           width={svgWidth}
           height={svgHeight}
           style={{ background: '#f0d9b5' }}
         >
-          {/* coordinate lettere/numeri */}
+          {/* coordinate */}
           {showCoordinates &&
             columnLabels.map((l, j) => {
               const x = MARGIN + j * CELL_SIZE;
               return (
-                <React.Fragment key={l + 'coords'}>
+                <React.Fragment key={'col' + l}>
                   <text x={x} y={MARGIN - 30} textAnchor="middle" fontSize={20}>
                     {l}
                   </text>
@@ -263,9 +319,9 @@ export default function Goban({
           {showCoordinates &&
             Array.from({ length: BOARD_SIZE }).map((_, i) => {
               const y = MARGIN + i * CELL_SIZE + 4;
-              const label = (BOARD_SIZE - i).toString();
+              const label = BOARD_SIZE - i;
               return (
-                <React.Fragment key={'num' + i}>
+                <React.Fragment key={'row' + i}>
                   <text x={MARGIN - 30} y={y} textAnchor="end" fontSize={20}>
                     {label}
                   </text>
@@ -281,7 +337,7 @@ export default function Goban({
               );
             })}
 
-          {/* linee goban */}
+          {/* griglia */}
           {Array.from({ length: BOARD_SIZE }).map((_, i) => {
             const pos = MARGIN + i * CELL_SIZE;
             return (
@@ -304,11 +360,11 @@ export default function Goban({
             );
           })}
 
-          {/* aree cliccabili */}
+          {/* click‑areas */}
           {board.map((row, r) =>
             row.map((_, c) => (
               <circle
-                key={`hit-${r}-${c}`}
+                key={'hit' + r + c}
                 cx={MARGIN + c * CELL_SIZE}
                 cy={MARGIN + r * CELL_SIZE}
                 r={CELL_SIZE / 2}
@@ -322,12 +378,12 @@ export default function Goban({
           {/* pietre */}
           {board.map((row, r) =>
             row.map((cell, c) => {
-              if (cell === 0) return null;
-              const cx = MARGIN + c * CELL_SIZE;
-              const cy = MARGIN + r * CELL_SIZE;
-              const lib = chainMap.get(`${r},${c}`);
+              if (!cell) return null;
+              const cx = MARGIN + c * CELL_SIZE,
+                cy = MARGIN + r * CELL_SIZE,
+                libs = chainMap.get(`${r},${c}`);
               return (
-                <g key={`stone-${r}-${c}`}>
+                <g key={'stone' + r + c}>
                   <circle
                     cx={cx}
                     cy={cy}
@@ -335,7 +391,7 @@ export default function Goban({
                     fill={cell === 1 ? 'black' : 'white'}
                     stroke="black"
                   />
-                  {showLiberties && lib !== undefined && (
+                  {showLiberties && libs !== undefined && (
                     <text
                       x={cx}
                       y={cy + 4}
@@ -343,7 +399,7 @@ export default function Goban({
                       fill={cell === 1 ? 'white' : 'black'}
                       fontSize={12}
                     >
-                      {lib}
+                      {libs}
                     </text>
                   )}
                 </g>
@@ -351,59 +407,90 @@ export default function Goban({
             }),
           )}
         </svg>
+
+        {/* comandi navigazione */}
+        <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
+          <button onClick={toStart} disabled={currentNode === root}>
+            &lt;&lt;
+          </button>
+          <button onClick={back} disabled={currentNode === root}>
+            &lt;
+          </button>
+          <button
+            onClick={forward}
+            disabled={currentNode.children.length === 0}
+          >
+            &gt;
+          </button>
+          <button onClick={toEnd} disabled={currentNode.children.length === 0}>
+            &gt;&gt;
+          </button>
+        </div>
+
         {message && <p style={{ color: 'red' }}>{message}</p>}
       </div>
 
-      {/* --------------------------- ALBERO MOSSE --------------------------- */}
+      {/* ---------------- albero mosse ---------------- */}
       {showMoveTree && (
         <div
           style={{
             overflowX: 'auto',
             resize: 'horizontal',
             border: '1px solid #ccc',
-            padding: 10,
+            padding: 8,
             maxWidth: '100%',
           }}
         >
-          <svg width={moveTreeWidth} height={moveTreeHeight}>
-            {moves.map((move, idx) => {
-              const cx = MOVE_TREE_MARGIN + idx * NODE_SPACING;
-              const cy = moveTreeHeight / 2;
-              const prevCx =
-                MOVE_TREE_MARGIN + (idx - 1) * NODE_SPACING + NODE_RADIUS;
-              const nextCx = cx - NODE_RADIUS;
-              const isBlack = move.player === 1;
-
+          <svg width={treeWidth} height={treeHeight}>
+            {/* linee genitore‑figlio */}
+            {nodes.map((n) => {
+              if (!n.parent || n.parent === root) return null;
+              const x1 =
+                  TREE_MARGIN + n.parent.depth * COL_SPACING + NODE_RADIUS,
+                y1 = TREE_MARGIN + n.parent.branch * ROW_SPACING + NODE_RADIUS,
+                x2 = TREE_MARGIN + n.depth * COL_SPACING - NODE_RADIUS,
+                y2 = TREE_MARGIN + n.branch * ROW_SPACING + NODE_RADIUS;
               return (
-                <g key={`node-${idx}`}>
-                  {/* linea dal bordo del nodo precedente al bordo dell'attuale */}
-                  {idx > 0 && (
-                    <line
-                      x1={prevCx}
-                      y1={cy}
-                      x2={nextCx}
-                      y2={cy}
-                      stroke="black"
-                    />
-                  )}
+                <line
+                  key={'ln' + n.id}
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  stroke="black"
+                />
+              );
+            })}
 
-                  {/* nodo */}
+            {/* nodi */}
+            {nodes.map((n) => {
+              const cx = TREE_MARGIN + n.depth * COL_SPACING,
+                cy = TREE_MARGIN + n.branch * ROW_SPACING,
+                isBlack = n.player === 1,
+                selected = n === currentNode;
+              return (
+                <g
+                  key={'nd' + n.id}
+                  transform={`translate(${cx},${cy})`}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setCurrentNode(n)}
+                >
                   <circle
-                    cx={cx}
-                    cy={cy}
+                    cx={NODE_RADIUS}
+                    cy={NODE_RADIUS}
                     r={NODE_RADIUS}
                     fill={isBlack ? 'black' : 'white'}
-                    stroke="black"
+                    stroke={selected ? 'red' : 'black'}
+                    strokeWidth={selected ? 2 : 1}
                   />
-                  {/* numero mossa */}
                   <text
-                    x={cx}
-                    y={cy + 4}
+                    x={NODE_RADIUS}
+                    y={NODE_RADIUS + 4}
                     textAnchor="middle"
-                    fill={isBlack ? 'white' : 'black'}
                     fontSize={14}
+                    fill={isBlack ? 'white' : 'black'}
                   >
-                    {idx + 1}
+                    {n.depth + 1}
                   </text>
                 </g>
               );
