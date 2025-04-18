@@ -103,8 +103,9 @@ export default function Goban({
     node.children.forEach((ch) => shiftBranches(ch, from));
   };
 
+  /* ---- click sul goban ---- */
   const handleClick = (row: number, col: number) => {
-    // 1. se la mossa esiste già come figlio → naviga
+    /* 1 – se la mossa esiste già come figlio → naviga */
     const existing = currentNode.children.find(
       (c) => c.row === row && c.col === col,
     );
@@ -113,19 +114,36 @@ export default function Goban({
       return;
     }
 
-    // 2. capire se stiamo aprendo un NUOVO ramo (il padre ha già figli)
-    const branching = currentNode.children.length > 0;
+    /* 2 – decidiamo la riga (branch) da assegnare */
+    let insertRow: number;
 
-    //    • se è proseguimento della main‑line: stessa riga
-    //    • se è nuovo ramo: riga subito sotto, poi sposta gli altri
-    const insertRow = branching ? currentNode.branch + 1 : currentNode.branch;
+    if (currentNode.children.length === 0) {
+      /* proseguo la main‑line → stessa riga del padre */
+      insertRow = currentNode.branch;
+    } else {
+      /* nuovo ramo:
+       troviamo il branch più basso ALL’INTERNO del sotto‑albero del padre */
+      const maxInSubtree = (node: MoveNode): number => {
+        let m = node.branch;
+        node.children.forEach((ch) => {
+          m = Math.max(m, maxInSubtree(ch));
+        });
+        return m;
+      };
 
-    if (branching) {
-      // sposta in basso tutti i rami che stanno a partire da insertRow
+      const maxSiblingBranch = currentNode.children.reduce(
+        (m, ch) => Math.max(m, maxInSubtree(ch)),
+        currentNode.branch,
+      );
+
+      insertRow = maxSiblingBranch + 1;
+
+      /* spostiamo in basso tutto ciò che sta da insertRow in poi
+       (in tutto l’albero, così non ci sono collisioni di righe)          */
       shiftBranches(root, insertRow);
     }
 
-    // 3. crea il nodo
+    /* 3 – creiamo il nuovo nodo */
     const newNode: MoveNode = {
       id: nextId.current++,
       row,
