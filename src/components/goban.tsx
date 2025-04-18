@@ -13,7 +13,7 @@ type MoveNode = {
   player: number; // 1 nero, 2 bianco
   parent: MoveNode | null;
   children: MoveNode[];
-  branch: number; // riga nell’albero
+  branch: number; // riga verticale nell’albero
   depth: number; // colonna = mossa‑1
 };
 
@@ -30,45 +30,43 @@ const createInitialBoard = (n: number) =>
   Array.from({ length: n }, () => Array(n).fill(0));
 
 const getColumnLabels = (size: number) => {
-  const labels: string[] = [];
-  for (let c = 65; labels.length < size; c++) {
+  const out: string[] = [];
+  for (let c = 65; out.length < size; c++) {
     const l = String.fromCharCode(c);
-    if (l !== 'I') labels.push(l);
+    if (l !== 'I') out.push(l);
   }
-  return labels;
+  return out;
 };
 
 function getChainAndLiberties(
-  row: number,
-  col: number,
+  r: number,
+  c: number,
   board: number[][],
   size: number,
 ) {
-  const color = board[row][col];
+  const color = board[r][c];
   const chain = new Set<string>();
   const libs = new Set<string>();
-  const stack: [number, number][] = [[row, col]];
+  const stack: [number, number][] = [[r, c]];
   const dirs = [
     [-1, 0],
     [1, 0],
     [0, -1],
     [0, 1],
   ];
-
   while (stack.length) {
-    const [r, c] = stack.pop()!;
-    const key = `${r},${c}`;
+    const [y, x] = stack.pop()!;
+    const key = `${y},${x}`;
     if (chain.has(key)) continue;
     chain.add(key);
-
-    for (const [dr, dc] of dirs) {
-      const nr = r + dr,
-        nc = c + dc;
-      if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
-        if (board[nr][nc] === 0) libs.add(`${nr},${nc}`);
-        else if (board[nr][nc] === color) stack.push([nr, nc]);
+    dirs.forEach(([dy, dx]) => {
+      const ny = y + dy,
+        nx = x + dx;
+      if (ny >= 0 && ny < size && nx >= 0 && nx < size) {
+        if (board[ny][nx] === 0) libs.add(`${ny},${nx}`);
+        else if (board[ny][nx] === color) stack.push([ny, nx]);
       }
-    }
+    });
   }
   return { chain, liberties: libs.size };
 }
@@ -91,88 +89,22 @@ export default function Goban({
   }).current;
   const [currentNode, setCurrentNode] = useState<MoveNode>(root);
   const nextId = useRef(1);
-  const nextBranch = useRef(1);
 
   /* ---- stato goban ---- */
   const [board, setBoard] = useState(createInitialBoard(BOARD_SIZE));
   const [prisonersBlack, setPrisonersBlack] = useState(0);
   const [prisonersWhite, setPrisonersWhite] = useState(0);
-  const [message, setMessage] = useState('');
   const [showLiberties, setShowLiberties] = useState(true);
   const [showCoordinates, setShowCoordinates] = useState(true);
 
-  /* ---- ricostruzione board ---- */
-  useEffect(() => {
-    const b = createInitialBoard(BOARD_SIZE);
-    let prB = 0,
-      prW = 0;
-    const path: MoveNode[] = [];
-    for (let n: MoveNode | null = currentNode; n && n !== root; n = n.parent)
-      path.unshift(n);
+  /* ---- helper: sposta tutti i nodi con branch >= from di +1 ---- */
+  const shiftBranches = (node: MoveNode, from: number) => {
+    if (node.branch >= from) node.branch += 1;
+    node.children.forEach((ch) => shiftBranches(ch, from));
+  };
 
-    path.forEach((mv) => {
-      if (b[mv.row][mv.col]) return;
-      const pl = mv.player,
-        opp = pl === 1 ? 2 : 1;
-      b[mv.row][mv.col] = pl;
-
-      const remove = (ch: Set<string>) =>
-        ch.forEach((p) => {
-          const [r, c] = p.split(',').map(Number);
-          b[r][c] = 0;
-        });
-
-      let captured = 0;
-      const done = new Set<string>();
-      [
-        [-1, 0],
-        [1, 0],
-        [0, -1],
-        [0, 1],
-      ].forEach(([dr, dc]) => {
-        const nr = mv.row + dr,
-          nc = mv.col + dc;
-        if (
-          nr >= 0 &&
-          nr < BOARD_SIZE &&
-          nc >= 0 &&
-          nc < BOARD_SIZE &&
-          b[nr][nc] === opp &&
-          !done.has(`${nr},${nc}`)
-        ) {
-          const { chain, liberties } = getChainAndLiberties(
-            nr,
-            nc,
-            b,
-            BOARD_SIZE,
-          );
-          if (liberties === 0) {
-            captured += chain.size;
-            remove(chain);
-            chain.forEach((p) => done.add(p));
-          }
-        }
-      });
-      if (captured) {
-        if (pl === 1) {
-          prB += captured;
-        } else {
-          prW += captured;
-        }
-      }
-    });
-
-    setBoard(b);
-    setPrisonersBlack(prB);
-    setPrisonersWhite(prW);
-    setMessage('');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentNode]);
-
-  const currentPlayer = currentNode.player === 1 ? 2 : 1;
-
-  /* ---- click goban ---- */
   const handleClick = (row: number, col: number) => {
+    // 1. se la mossa esiste già come figlio → naviga
     const existing = currentNode.children.find(
       (c) => c.row === row && c.col === col,
     );
@@ -180,23 +112,99 @@ export default function Goban({
       setCurrentNode(existing);
       return;
     }
-    const branch =
-      currentNode.children.length === 0
-        ? currentNode.branch
-        : nextBranch.current++;
+
+    // 2. capire se stiamo aprendo un NUOVO ramo (il padre ha già figli)
+    const branching = currentNode.children.length > 0;
+
+    //    • se è proseguimento della main‑line: stessa riga
+    //    • se è nuovo ramo: riga subito sotto, poi sposta gli altri
+    const insertRow = branching ? currentNode.branch + 1 : currentNode.branch;
+
+    if (branching) {
+      // sposta in basso tutti i rami che stanno a partire da insertRow
+      shiftBranches(root, insertRow);
+    }
+
+    // 3. crea il nodo
     const newNode: MoveNode = {
       id: nextId.current++,
       row,
       col,
-      player: currentPlayer,
+      player: currentNode.player === 1 ? 2 : 1,
       parent: currentNode,
       children: [],
-      branch,
+      branch: insertRow,
       depth: currentNode.depth + 1,
     };
+
     currentNode.children.push(newNode);
     setCurrentNode(newNode);
   };
+
+  /* ---- ricostruisci goban a ogni cambio di currentNode ---- */
+  useEffect(() => {
+    const b = createInitialBoard(BOARD_SIZE);
+    let prB = 0,
+      prW = 0;
+
+    const replay: MoveNode[] = [];
+    for (let n: MoveNode | null = currentNode; n && n !== root; n = n.parent)
+      replay.unshift(n);
+
+    replay.forEach((mv) => {
+      const { row, col } = mv;
+      if (b[row][col]) return;
+      const player = mv.player,
+        opp = player === 1 ? 2 : 1;
+      b[row][col] = player;
+
+      let cap = 0;
+      const done = new Set<string>();
+      [
+        [-1, 0],
+        [1, 0],
+        [0, -1],
+        [0, 1],
+      ].forEach(([dy, dx]) => {
+        const ny = row + dy,
+          nx = col + dx;
+        if (
+          ny >= 0 &&
+          ny < BOARD_SIZE &&
+          nx >= 0 &&
+          nx < BOARD_SIZE &&
+          b[ny][nx] === opp &&
+          !done.has(`${ny},${nx}`)
+        ) {
+          const { chain, liberties } = getChainAndLiberties(
+            ny,
+            nx,
+            b,
+            BOARD_SIZE,
+          );
+          if (liberties === 0) {
+            chain.forEach((p) => {
+              const [r, c] = p.split(',').map(Number);
+              b[r][c] = 0;
+            });
+            cap += chain.size;
+            chain.forEach((p) => done.add(p));
+          }
+        }
+      });
+      if (cap) {
+        if (player === 1) {
+          prB += cap;
+        } else {
+          prW += cap;
+        }
+      }
+    });
+
+    setBoard(b);
+    setPrisonersBlack(prB);
+    setPrisonersWhite(prW);
+  }, [currentNode, BOARD_SIZE, root]);
 
   /* ---- navigazione ---- */
   const toStart = () => setCurrentNode(root);
@@ -209,18 +217,18 @@ export default function Goban({
     setCurrentNode(n);
   };
 
-  /* ---------- layout goban ---------- */
+  /* ---------- layout base goban ---------- */
   const boardPx = (BOARD_SIZE - 1) * CELL_SIZE;
-  const svgWidth = boardPx + MARGIN * 2;
-  const svgHeight = boardPx + MARGIN * 2;
-  const columnLabels = getColumnLabels(BOARD_SIZE);
+  const svgW = boardPx + MARGIN * 2;
+  const svgH = boardPx + MARGIN * 2;
+  const colLabels = getColumnLabels(BOARD_SIZE);
 
-  /* ---------- catene/libertà ---------- */
-  const chainMap = new Map<string, number>();
-  const vis = new Set<string>();
+  /* ---------- catene/libertà (solo per display) ---------- */
+  const chainLib = new Map<string, number>();
+  const seen = new Set<string>();
   for (let r = 0; r < BOARD_SIZE; r++)
     for (let c = 0; c < BOARD_SIZE; c++)
-      if (board[r][c] && !vis.has(`${r},${c}`)) {
+      if (board[r][c] && !seen.has(`${r},${c}`)) {
         const { chain, liberties } = getChainAndLiberties(
           r,
           c,
@@ -229,36 +237,35 @@ export default function Goban({
         );
         let rep: [number, number] | null = null;
         chain.forEach((p) => {
-          const [pr, pc] = p.split(',').map(Number);
-          if (!rep || pr < rep[0] || (pr === rep[0] && pc < rep[1]))
-            rep = [pr, pc];
+          const [y, x] = p.split(',').map(Number);
+          if (!rep || y < rep[0] || (y === rep[0] && x < rep[1])) rep = [y, x];
         });
-        if (rep) chainMap.set(`${rep[0]},${rep[1]}`, liberties);
-        chain.forEach((p) => vis.add(p));
+        if (rep) chainLib.set(`${rep[0]},${rep[1]}`, liberties);
+        chain.forEach((p) => seen.add(p));
       }
 
-  /* ---------- albero ---------- */
+  /* ---------- prepara dati albero ---------- */
   const nodes: MoveNode[] = [];
-  const dfs = (n: MoveNode) => {
+  const walk = (n: MoveNode) => {
     if (n !== root) nodes.push(n);
-    n.children.forEach(dfs);
+    n.children.forEach(walk);
   };
-  dfs(root);
+  walk(root);
 
-  const maxD = nodes.reduce((m, n) => Math.max(m, n.depth), 0);
-  const maxB = nodes.reduce((m, n) => Math.max(m, n.branch), 0);
-  const treeW = TREE_MARGIN * 2 + maxD * COL_SPACING + NODE_RADIUS * 2;
-  const treeH = TREE_MARGIN * 2 + maxB * ROW_SPACING + NODE_RADIUS * 2;
+  const maxDepth = nodes.reduce((m, n) => Math.max(m, n.depth), 0);
+  const maxBranch = nodes.reduce((m, n) => Math.max(m, n.branch), 0);
+  const treeW = TREE_MARGIN * 2 + maxDepth * COL_SPACING + NODE_RADIUS * 2;
+  const treeH = TREE_MARGIN * 2 + maxBranch * ROW_SPACING + NODE_RADIUS * 2;
 
   /* ---------- render ---------- */
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20 }}>
       {/* ---------------- goban ---------------- */}
       <div>
-        <h3>Goban interattivo</h3>
+        <h3>Goban</h3>
         <p>
-          Turno: {currentPlayer === 1 ? 'Nero' : 'Bianco'} • Prigionieri → Nero{' '}
-          {prisonersBlack} ⁄ Bianco {prisonersWhite}
+          Turno: {currentNode.player === 1 ? 'Bianco' : 'Nero'} • Prigionieri →{' '}
+          N {prisonersBlack} ⁄ B {prisonersWhite}
         </p>
 
         <div style={{ marginBottom: 8 }}>
@@ -280,15 +287,11 @@ export default function Goban({
           </label>
         </div>
 
-        {/* svg goban */}
-        <svg
-          width={svgWidth}
-          height={svgHeight}
-          style={{ background: '#f0d9b5' }}
-        >
+        {/* SVG GOBAN */}
+        <svg width={svgW} height={svgH} style={{ background: '#f0d9b5' }}>
           {/* coordinate */}
           {showCoordinates &&
-            columnLabels.map((l, j) => {
+            colLabels.map((l, j) => {
               const x = MARGIN + j * CELL_SIZE;
               return (
                 <React.Fragment key={l}>
@@ -309,11 +312,11 @@ export default function Goban({
           {showCoordinates &&
             Array.from({ length: BOARD_SIZE }).map((_, i) => {
               const y = MARGIN + i * CELL_SIZE + 4;
-              const label = BOARD_SIZE - i;
+              const lbl = BOARD_SIZE - i;
               return (
                 <React.Fragment key={i}>
                   <text x={MARGIN - 30} y={y} textAnchor="end" fontSize={20}>
-                    {label}
+                    {lbl}
                   </text>
                   <text
                     x={MARGIN + boardPx + 30}
@@ -321,7 +324,7 @@ export default function Goban({
                     textAnchor="start"
                     fontSize={20}
                   >
-                    {label}
+                    {lbl}
                   </text>
                 </React.Fragment>
               );
@@ -350,7 +353,7 @@ export default function Goban({
             );
           })}
 
-          {/* hitbox */}
+          {/* hit‑areas */}
           {board.map((row, r) =>
             row.map((_, c) => (
               <circle
@@ -359,8 +362,8 @@ export default function Goban({
                 cy={MARGIN + r * CELL_SIZE}
                 r={CELL_SIZE / 2}
                 fill="transparent"
-                onClick={() => handleClick(r, c)}
                 style={{ cursor: 'pointer' }}
+                onClick={() => handleClick(r, c)}
               />
             )),
           )}
@@ -369,9 +372,9 @@ export default function Goban({
           {board.map((row, r) =>
             row.map((cell, c) => {
               if (!cell) return null;
-              const cx = MARGIN + c * CELL_SIZE;
-              const cy = MARGIN + r * CELL_SIZE;
-              const libs = chainMap.get(`${r},${c}`);
+              const cx = MARGIN + c * CELL_SIZE,
+                cy = MARGIN + r * CELL_SIZE;
+              const libs = chainLib.get(`${r},${c}`);
               return (
                 <g key={'s' + r + c}>
                   <circle
@@ -386,8 +389,8 @@ export default function Goban({
                       x={cx}
                       y={cy + 4}
                       textAnchor="middle"
-                      fill={cell === 1 ? 'white' : 'black'}
                       fontSize={12}
+                      fill={cell === 1 ? 'white' : 'black'}
                     >
                       {libs}
                     </text>
@@ -398,7 +401,7 @@ export default function Goban({
           )}
         </svg>
 
-        {/* comandi */}
+        {/* controlli */}
         <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
           <button onClick={toStart} disabled={currentNode === root}>
             &lt;&lt;
@@ -416,8 +419,6 @@ export default function Goban({
             &gt;&gt;
           </button>
         </div>
-
-        {message && <p style={{ color: 'red' }}>{message}</p>}
       </div>
 
       {/* ---------------- albero ---------------- */}
@@ -425,7 +426,7 @@ export default function Goban({
         <div
           style={{
             overflow: 'auto',
-            resize: 'both', // ridimensionabile in larghezza e altezza
+            resize: 'both', // larghezza + altezza
             border: '1px solid #ccc',
             padding: 8,
             maxWidth: '100%',
@@ -433,7 +434,7 @@ export default function Goban({
           }}
         >
           <svg width={treeW} height={treeH}>
-            {/* linee */}
+            {/* collegamenti */}
             {nodes.map((n) => {
               if (!n.parent || n.parent === root) return null;
 
@@ -443,24 +444,42 @@ export default function Goban({
                 cCx = TREE_MARGIN + n.depth * COL_SPACING + NODE_RADIUS,
                 cCy = TREE_MARGIN + n.branch * ROW_SPACING + NODE_RADIUS;
 
-              const dx = cCx - pCx,
-                dy = cCy - pCy,
-                dist = Math.sqrt(dx * dx + dy * dy),
-                ux = dx / dist,
-                uy = dy / dist;
+              // ➊ stessa riga → orizzontale
+              if (n.branch === n.parent.branch) {
+                return (
+                  <line
+                    key={'edge' + n.id}
+                    x1={pCx + NODE_RADIUS}
+                    y1={pCy}
+                    x2={cCx - NODE_RADIUS}
+                    y2={cCy}
+                    stroke="black"
+                  />
+                );
+              }
 
-              const x1 = pCx + NODE_RADIUS * ux,
-                y1 = pCy + NODE_RADIUS * uy,
-                x2 = cCx - NODE_RADIUS * ux,
-                y2 = cCy - NODE_RADIUS * uy;
+              // ➋ ramo SOTTO → gomito (verticale giù + orizzontale)
+              if (n.branch > n.parent.branch) {
+                return (
+                  <polyline
+                    key={'edge' + n.id}
+                    points={`${pCx},${pCy + NODE_RADIUS} ${pCx},${cCy} ${
+                      cCx - NODE_RADIUS
+                    },${cCy}`}
+                    fill="none"
+                    stroke="black"
+                  />
+                );
+              }
 
+              // ➌ ramo SOPRA → segmento orizzontale all’altezza del genitore
               return (
                 <line
-                  key={'l' + n.id}
-                  x1={x1}
-                  y1={y1}
-                  x2={x2}
-                  y2={y2}
+                  key={'edge' + n.id}
+                  x1={pCx + NODE_RADIUS}
+                  y1={pCy}
+                  x2={cCx - NODE_RADIUS}
+                  y2={pCy}
                   stroke="black"
                 />
               );
