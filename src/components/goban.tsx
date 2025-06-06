@@ -485,12 +485,16 @@ export default function Goban({
       {showMoveTree && (
         <div
           style={{
+            /* 1️⃣ dimensione fissa ma “elastica” */
+            width: 'clamp(260px, 28vw, 340px)', // min-pref-max
+            height: 'clamp(220px, 50vh, 480px)', // idem
+            flex: '0 0 clamp(260px, 28vw, 340px)', // evita di espandersi
+
+            /* 2️⃣ il resto invariato */
             overflow: 'auto',
-            resize: 'both', // larghezza + altezza
+            resize: 'both', // l’utente può comunque ridimensionare
             border: '1px solid #ccc',
             padding: 8,
-            maxWidth: '100%',
-            maxHeight: '100%',
           }}
         >
           <svg width={treeW} height={treeH}>
