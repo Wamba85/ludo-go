@@ -96,6 +96,7 @@ export default function Goban({
   const [prisonersWhite, setPrisonersWhite] = useState(0);
   const [showLiberties, setShowLiberties] = useState(true);
   const [showCoordinates, setShowCoordinates] = useState(true);
+  const [koPoint, setKoPoint] = useState<[number, number] | null>(null);
 
   /* ---- helper: sposta tutti i nodi con branch >= from di +1 ---- */
   const shiftBranches = (node: MoveNode, from: number) => {
@@ -105,6 +106,7 @@ export default function Goban({
 
   /* ---- click sul goban ---- */
   const handleClick = (row: number, col: number) => {
+    if (koPoint && koPoint[0] === row && koPoint[1] === col) return;
     /* 1 – se la mossa esiste già come figlio → naviga */
     const existing = currentNode.children.find(
       (c) => c.row === row && c.col === col,
@@ -164,26 +166,33 @@ export default function Goban({
     const b = createInitialBoard(BOARD_SIZE);
     let prB = 0,
       prW = 0;
+    let tmpKo: [number, number] | null = null;
+
+    const dirs = [
+      [-1, 0],
+      [1, 0],
+      [0, -1],
+      [0, 1],
+    ]; //  ←  *** QUI ***
 
     const replay: MoveNode[] = [];
     for (let n: MoveNode | null = currentNode; n && n !== root; n = n.parent)
       replay.unshift(n);
 
-    replay.forEach((mv) => {
+    replay.forEach((mv, idx) => {
       const { row, col } = mv;
       if (b[row][col]) return;
       const player = mv.player,
         opp = player === 1 ? 2 : 1;
+
       b[row][col] = player;
 
       let cap = 0;
+      let singleCaptured: [number, number] | null = null;
+
+      // --- catture ---
       const done = new Set<string>();
-      [
-        [-1, 0],
-        [1, 0],
-        [0, -1],
-        [0, 1],
-      ].forEach(([dy, dx]) => {
+      dirs.forEach(([dy, dx]) => {
         const ny = row + dy,
           nx = col + dx;
         if (
@@ -201,6 +210,7 @@ export default function Goban({
             BOARD_SIZE,
           );
           if (liberties === 0) {
+            if (chain.size === 1) singleCaptured = [ny, nx]; // 1 pietra ⇒ ko
             chain.forEach((p) => {
               const [r, c] = p.split(',').map(Number);
               b[r][c] = 0;
@@ -210,18 +220,23 @@ export default function Goban({
           }
         }
       });
-      if (cap) {
-        if (player === 1) {
-          prB += cap;
-        } else {
-          prW += cap;
-        }
+
+      if (player === 1) {
+        prB += cap;
+      } else {
+        prW += cap;
+      }
+
+      // --- ko: solo se l’ULTIMA mossa ha catturato esattamente 1 pietra
+      if (idx === replay.length - 1 && cap === 1 && singleCaptured) {
+        tmpKo = singleCaptured;
       }
     });
 
     setBoard(b);
     setPrisonersBlack(prB);
     setPrisonersWhite(prW);
+    setKoPoint(tmpKo); // <- aggiorna il punto di ko
   }, [currentNode, BOARD_SIZE, root]);
 
   /* ---- navigazione ---- */
@@ -416,6 +431,18 @@ export default function Goban({
                 </g>
               );
             }),
+          )}
+          {/* simbolo KO */}
+          {koPoint && (
+            <text
+              x={MARGIN + koPoint[1] * CELL_SIZE}
+              y={MARGIN + koPoint[0] * CELL_SIZE + 6}
+              textAnchor="middle"
+              fontSize={22}
+              fill="red"
+            >
+              ×
+            </text>
           )}
         </svg>
 
