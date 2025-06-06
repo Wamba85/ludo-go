@@ -428,6 +428,21 @@ export default function Goban({
                       {libs}
                     </text>
                   )}
+
+                  {currentNode !== root &&
+                    r === currentNode.row &&
+                    c === currentNode.col && (
+                      <circle
+                        cx={cx}
+                        cy={cy}
+                        r={CELL_SIZE / 2 - 6} // anello un po’ più piccolo della pietra
+                        fill="none"
+                        stroke="orange" // colore tenue; cambia a gusto
+                        strokeWidth={3}
+                        pointerEvents="none" // non intercetta i click
+                        opacity={0.7} // “leggero”
+                      />
+                    )}
                 </g>
               );
             }),
