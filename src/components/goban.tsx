@@ -1,8 +1,10 @@
 'use client';
+import { buildTree } from '@/lib/parserSgfMeta';
 import React, { useState, useEffect, useRef } from 'react';
 
 /* ---------- tipi ---------- */
 interface GobanProps {
+  sgfMoves: string;
   BOARD_SIZE?: number;
   showMoveTree?: boolean;
 }
@@ -73,20 +75,23 @@ function getChainAndLiberties(
 
 /* ---------- componente ---------- */
 export default function Goban({
-  BOARD_SIZE = 9,
+  sgfMoves,
+  BOARD_SIZE = 19,
   showMoveTree = true,
 }: GobanProps) {
   /* ---- struttura albero ---- */
-  const root = useRef<MoveNode>({
-    id: 0,
-    row: -1,
-    col: -1,
-    player: 2,
-    parent: null,
-    children: [],
-    branch: 0,
-    depth: -1,
-  }).current;
+  // const root = useRef<MoveNode>({
+  //   id: 0,
+  //   row: -1,
+  //   col: -1,
+  //   player: 2,
+  //   parent: null,
+  //   children: [],
+  //   branch: 0,
+  //   depth: -1,
+  // }).current;
+
+  const root = useRef<MoveNode>(buildTree(sgfMoves)).current;
   const [currentNode, setCurrentNode] = useState<MoveNode>(root);
   const nextId = useRef(1);
 
