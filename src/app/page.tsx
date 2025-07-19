@@ -3,9 +3,9 @@
 // ==================================================
 'use client';
 
-import Goban from '@/components/goban';
+import Goban from '@/components/goban/goban';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import SgfUploader from '@/lib/parserSgfMeta';
+import SgfUploader from '@/lib/parser-sgf-meta';
 import { Flame, Star, CalendarCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';

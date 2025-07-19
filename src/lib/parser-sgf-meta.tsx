@@ -1,6 +1,6 @@
 /* parseSgfMeta.ts ------------------------------------------------------- */
 
-import { SgfMeta, SgfRecord } from '@/types/SgfMeta';
+import { SgfMeta, SgfRecord } from '@/types/sgf-meta';
 import { useState } from 'react';
 
 const rx = (k: string) => new RegExp(`${k}\\[([^\\]]*)\\]`, 'i');
