@@ -213,5 +213,6 @@ export function useGobanState(
     forward,
     toEnd,
     setCurrentNode, // necessario per MoveTree
+    meta: { size: BOARD_SIZE_DEFAULT },
   } as const;
 }

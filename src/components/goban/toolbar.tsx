@@ -17,6 +17,8 @@ import {
   ChevronsLeft,
   ChevronRight,
   ChevronsRight,
+  Upload,
+  Download,
 } from 'lucide-react';
 
 interface ToolbarProps {
@@ -38,6 +40,8 @@ interface ToolbarProps {
   /* disabled flags (calcolati dal contenitore) */
   disableBack: boolean;
   disableForward: boolean;
+  onOpenSgf: (f: File) => void;
+  onExportSgf: () => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -53,7 +57,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
   toEnd,
   disableBack,
   disableForward,
+  onOpenSgf,
+  onExportSgf,
 }) => {
+  const fileId = 'sgf-file-input';
   return (
     <Card className="w-fit p-4 mb-4 shadow-lg">
       <CardContent className="flex flex-col gap-4 p-0">
@@ -123,6 +130,30 @@ const Toolbar: React.FC<ToolbarProps> = ({
             aria-label="Vai alla fine"
           >
             <ChevronsRight className="h-4 w-4" />
+          </Button>
+        </div>
+        {/* SGF I/O ----------------------------------------------------------- */}
+        <div className="flex gap-2">
+          <input
+            id={fileId}
+            type="file"
+            accept=".sgf,text/plain"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) onOpenSgf(f);
+              e.currentTarget.value = '';
+            }}
+          />
+          <Button
+            variant="secondary"
+            size="default"
+            onClick={() => document.getElementById(fileId)?.click()}
+          >
+            <Upload className="h-4 w-4 mr-2" /> Apri SGF
+          </Button>
+          <Button variant="secondary" size="default" onClick={onExportSgf}>
+            <Download className="h-4 w-4 mr-2" /> Esporta SGF
           </Button>
         </div>
       </CardContent>

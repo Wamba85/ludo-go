@@ -13,6 +13,7 @@ import GobanBoard from './goban-board';
 import MoveTree from './move-tree';
 import Toolbar from './toolbar';
 import { useGobanState } from '@/hooks/use-goban-state';
+import { exportMoveTreeToSgf, defaultMeta } from '@/lib/sgf/moveNode-adapter';
 
 interface GobanProps {
   sgfMoves: string;
@@ -25,9 +26,29 @@ export default function Goban({
   BOARD_SIZE = 19,
   showMoveTree = true,
 }: GobanProps) {
-  const state = useGobanState(sgfMoves, BOARD_SIZE);
+  const [sgfText, setSgfText] = useState(sgfMoves); // ← nuovo stato locale
+  const state = useGobanState(sgfText, BOARD_SIZE);
   const [showLiberties, setShowLiberties] = useState(true);
   const [showCoordinates, setShowCoordinates] = useState(true);
+
+  // ↓↓↓ AGGIUNTA: due azioni SGF
+  const handleOpenSgf = async (f: File) => {
+    const text = await f.text();
+    setSgfText(text); // ← niente replaceTree
+  };
+
+  const handleExportSgf = () => {
+    // supponiamo che lo state esponga meta corrente opzionale
+    const meta = state.meta ?? defaultMeta(BOARD_SIZE);
+    const sgf = exportMoveTreeToSgf(meta, state.root);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(
+      new Blob([sgf], { type: 'text/plain;charset=utf-8' }),
+    );
+    a.download = 'game.sgf';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
 
   /* flag per disabilitare i pulsanti << < > >> */
   const disableBack = state.currentNode === state.root;
@@ -45,6 +66,8 @@ export default function Goban({
           setShowLiberties={setShowLiberties}
           showCoordinates={showCoordinates}
           setShowCoordinates={setShowCoordinates}
+          onOpenSgf={handleOpenSgf} /* ← nuovo */
+          onExportSgf={handleExportSgf}
         />
 
         <GobanBoard
