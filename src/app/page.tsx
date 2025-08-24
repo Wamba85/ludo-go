@@ -5,10 +5,11 @@
 
 import Goban from '@/components/goban/goban';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AfterPlayCtx, Setup } from '@/hooks/use-goban-state';
 import SgfUploader from '@/lib/parser-sgf-meta';
 import { Flame, Star, CalendarCheck } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 // ⚠️ Da sostituire con dati reali via API o context una volta disponibile il backend
 const mockData = {
@@ -35,6 +36,32 @@ export default function Dashboard() {
     ],
     [],
   );
+
+  const captureSetup: Setup = useMemo(
+    () => ({
+      size: 9,
+      stones: [
+        { r: 4, c: 4, color: 2 }, // bianca centro
+        { r: 3, c: 4, color: 1 }, // nere adiacenti
+        { r: 4, c: 3, color: 1 },
+        { r: 5, c: 4, color: 1 },
+      ],
+      toPlay: 1, // muove Nero
+    }),
+    [],
+  );
+
+  const [capStatus, setCapStatus] = useState<'idle' | 'ok' | 'err'>('idle');
+  const [capRev, setCapRev] = useState(0);
+  const onAfterPlay = ({ board, lastMove }: AfterPlayCtx) => {
+    if (!lastMove) return;
+    if (board[4][4] === 0 && lastMove.player === 1) setCapStatus('ok');
+    else setCapStatus('err');
+  };
+  const resetCap = () => {
+    setCapStatus('idle');
+    setCapRev((v) => v + 1);
+  };
 
   return (
     <div className="flex flex-col items-center px-6 py-8 bg-[url('/kuro.svg')] bg-no-repeat bg-[length:180px] bg-[top_1rem_left_1rem] min-h-screen">
@@ -149,6 +176,42 @@ export default function Dashboard() {
       </section>
       <SgfUploader />
       <Goban sgfMoves=";B[qd];W[dp];B[pq];W[cc];B[fq];W[po];B[nq];W[od];B[qf];W[qq];B[qp];W[pp];B[rq];W[qr];B[op];W[pr];B[oq];W[rp];B[qo];W[ro];B[qn];W[rn];B[qm];W[ld];B[oc];W[nc];B[pc];W[hq];B[hp];W[ip];B[gp];W[jq];B[dq];W[cq];B[cp];W[bq];B[bp];W[do];B[br];W[eq];B[dr];W[er];B[cr];W[fr];B[ep];W[gq];B[eo];W[dn];B[en];W[dm];B[rm];W[rr];B[em];W[dl];B[el];W[dk];B[io];W[jo];B[jn];W[kn];B[in];W[ko];B[nn];W[ek];B[gl];W[fd];B[de];W[dd];B[fe];W[ee];B[ef];W[ed];B[ce];W[ff];B[eg];W[ge];B[di];W[gk];B[hk];W[gj];B[cj];W[hj];B[ij];W[ii];B[ik];W[ji];B[nb];W[mc];B[mb];W[lb];B[ne];W[mf];B[nf];W[mg];B[nh];W[ng];B[og];W[ni];B[mh];W[oh];B[oi];W[ph];B[pi];W[qh];B[qi];W[ri];B[rj];W[rh];B[mi];W[nj];B[mj];W[qj];B[pj];W[qk];B[pk];W[rk];B[sj];W[pl];B[nk];W[ql];B[rf];W[nl];B[ml];W[nm];B[mm];W[sm];B[sl];W[sn];B[pm];W[rl];B[ol];W[lk];B[km];W[lh];B[bl];W[no];B[oo];W[mn];B[om];W[of];B[pg];W[oe];B[pd];W[bm];B[bn];W[bk];B[cm];W[bj];B[bi];W[ck];B[bd];W[ch];B[ci];W[cg];B[fi];W[bc];B[bf];W[gh];B[fg];W[gg];B[ac];W[ab];B[ad];W[bo];B[ao];W[co];B[aq];W[bb];B[bh];W[ma];B[ob];W[lq];B[pf];W[nd];B[kj];W[jj];B[ki];W[kh];B[jk];W[kk];B[mk];W[hl];B[hm];W[fp];B[fk];W[fj];B[fl];W[ei];B[eh];W[ej];B[fo];W[fh];B[lp];W[mp];B[ln];W[lo];B[lr];W[kr];B[mq];W[kp];B[ms];W[lm];B[ll];W[kl];B[jm];W[pe];B[qe];W[or];B[nr];W[ks];B[ln];W[mo];B[na];W[la];B[am];W[cn];B[cl];W[ai];B[ah];W[ak];B[al];W[os];B[ns];W[ls];B[li];W[fq];B[es];W[fs];B[ds];W[cd];B[df];W[aj];B[mr];W[np];B[on];W[lm];B[dh];W[ln];B[dj];W[gi];B[jl])" />
+
+      {/* esempio cattura */}
+      {/* Esercizio: Cattura base */}
+      <div className="mt-10 w-full max-w-2xl">
+        <div className="mb-2 flex items-center gap-3">
+          <span
+            className={
+              capStatus === 'ok'
+                ? 'text-green-600'
+                : capStatus === 'err'
+                  ? 'text-red-600'
+                  : 'text-stone-600'
+            }
+          >
+            {capStatus === 'ok'
+              ? 'Corretto: cattura eseguita.'
+              : capStatus === 'err'
+                ? 'Errore: devi catturare la pietra centrale.'
+                : 'Esercizio: cattura la pietra bianca al centro.'}
+          </span>
+          <button
+            onClick={resetCap}
+            className="rounded border px-3 py-1 text-sm hover:bg-stone-50"
+          >
+            Reset
+          </button>
+        </div>
+
+        <Goban
+          key={capRev}
+          sgfMoves=""
+          BOARD_SIZE={9}
+          showMoveTree={false}
+          exerciseOptions={{ setup: captureSetup, onAfterPlay }}
+        />
+      </div>
 
       {/* Footer */}
       <footer className="mt-auto flex w-full max-w-4xl items-center justify-between py-6 text-xs text-stone-500">

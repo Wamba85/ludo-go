@@ -12,22 +12,27 @@ import React, { useState } from 'react';
 import GobanBoard from './goban-board';
 import MoveTree from './move-tree';
 import Toolbar from './toolbar';
-import { useGobanState } from '@/hooks/use-goban-state';
+import { AfterPlayCtx, Setup, useGobanState } from '@/hooks/use-goban-state';
 import { exportMoveTreeToSgf, defaultMeta } from '@/lib/sgf/moveNode-adapter';
 
 interface GobanProps {
   sgfMoves: string;
   BOARD_SIZE?: number;
   showMoveTree?: boolean;
+  exerciseOptions?: {
+    setup?: Setup;
+    onAfterPlay?: (ctx: AfterPlayCtx) => void;
+  };
 }
 
 export default function Goban({
   sgfMoves,
   BOARD_SIZE = 19,
   showMoveTree = true,
+  exerciseOptions,
 }: GobanProps) {
   const [sgfText, setSgfText] = useState(sgfMoves); // ← nuovo stato locale
-  const state = useGobanState(sgfText, BOARD_SIZE);
+  const state = useGobanState(sgfText, BOARD_SIZE, exerciseOptions); // ← usa sgfText
   const [showLiberties, setShowLiberties] = useState(true);
   const [showCoordinates, setShowCoordinates] = useState(true);
 

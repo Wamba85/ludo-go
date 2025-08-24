@@ -20,9 +20,24 @@ interface PrisonerCount {
   white: number;
 }
 
+export type Setup = {
+  size: number; // es. 9
+  stones: { r: number; c: number; color: 1 | 2 }[]; // 1=nero, 2=bianco
+  toPlay: 1 | 2; // chi muove per primo
+};
+
+export type AfterPlayCtx = {
+  board: number[][];
+  prisoners: { black: number; white: number };
+  currentNode: MoveNode;
+  root: MoveNode;
+  lastMove?: MoveNode;
+};
+
 export function useGobanState(
   sgfMoves: string,
   boardSize = BOARD_SIZE_DEFAULT,
+  opts?: { setup?: Setup; onAfterPlay?: (ctx: AfterPlayCtx) => void },
 ) {
   /* --------------------------------------------------------------------- */
   /* 1. Albero mosse                                                       */
@@ -42,6 +57,15 @@ export function useGobanState(
   });
   const [koPoint, setKoPoint] = useState<[number, number] | null>(null);
   const [treeRev, setTreeRev] = useState(0);
+
+  const setup = opts?.setup;
+
+  const nextPlayer =
+    currentNode === root
+      ? (setup?.toPlay ?? (currentNode.player === 1 ? 2 : 1))
+      : currentNode.player === 1
+        ? 2
+        : 1;
 
   useEffect(() => {
     const newRoot = buildTree(sgfMoves);
@@ -64,32 +88,31 @@ export function useGobanState(
       return;
     }
 
-    let insertRow: number;
-    if (currentNode.children.length === 0) {
-      insertRow = currentNode.branch;
-    } else {
-      const maxInSubtree = (node: MoveNode): number => {
-        let m = node.branch;
-        node.children.forEach((ch) => {
-          m = Math.max(m, maxInSubtree(ch));
-        });
-        return m;
-      };
-      const maxSiblingBranch = currentNode.children.reduce(
-        (m, ch) => Math.max(m, maxInSubtree(ch)),
-        currentNode.branch,
-      );
-      insertRow = maxSiblingBranch + 1;
+    const insertRow =
+      currentNode.children.length === 0
+        ? currentNode.branch
+        : (() => {
+            const maxInSubtree = (n: MoveNode): number => {
+              let m = n.branch;
+              n.children.forEach((ch) => {
+                m = Math.max(m, maxInSubtree(ch));
+              });
+              return m;
+            };
+            const maxSiblingBranch = currentNode.children.reduce(
+              (m, ch) => Math.max(m, maxInSubtree(ch)),
+              currentNode.branch,
+            );
+            const r = maxSiblingBranch + 1;
+            shiftBranches(root, r);
+            return r;
+          })();
 
-      shiftBranches(root, insertRow); // muta…
-    }
-
-    /* 3 → creiamo il nuovo nodo e aggiorniamo lo stato */
     const newNode: MoveNode = {
       id: nextId.current++,
       row,
       col,
-      player: currentNode.player === 1 ? 2 : 1,
+      player: nextPlayer,
       parent: currentNode,
       children: [],
       branch: insertRow,
@@ -99,21 +122,27 @@ export function useGobanState(
     currentNode.children.push(newNode);
     setCurrentNode(newNode);
     setTreeRev((r) => r + 1);
-
-    // setRoot({ ...root });
   };
 
   /* --------------------------------------------------------------------- */
   /* 4. Ricostruzione completa del goban quando cambia currentNode         */
   /* --------------------------------------------------------------------- */
   useEffect(() => {
-    // board vergine
     const b = createInitialBoard(boardSize);
+
+    // 1) applica setup iniziale
+    if (setup) {
+      if (setup.size !== boardSize) console.warn('setup.size != boardSize');
+      for (const s of setup.stones) {
+        if (s.r >= 0 && s.r < boardSize && s.c >= 0 && s.c < boardSize)
+          b[s.r][s.c] = s.color;
+      }
+    }
+
+    // 2) replay mosse fino al currentNode
     let prB = 0,
       prW = 0;
     let tmpKo: [number, number] | null = null;
-
-    // direzioni ortogonali
     const dirs: [number, number][] = [
       [-1, 0],
       [1, 0],
@@ -121,17 +150,13 @@ export function useGobanState(
       [0, 1],
     ];
 
-    // riproduciamo le mosse dalla radice fino al currentNode
     const replay: MoveNode[] = [];
-    for (let n: MoveNode | null = currentNode; n && n.parent; n = n.parent) {
-      replay.unshift(n); // esclude sempre il root (ha parent null)
-    }
+    for (let n: MoveNode | null = currentNode; n && n.parent; n = n.parent)
+      replay.unshift(n);
 
     replay.forEach((mv, idx) => {
-      const row = mv.row as number;
-      const col = mv.col as number;
-
-      // salta PASS o coordinate invalide
+      const row = mv.row as number,
+        col = mv.col as number;
       if (
         !Number.isInteger(row) ||
         !Number.isInteger(col) ||
@@ -139,24 +164,14 @@ export function useGobanState(
         col < 0 ||
         row >= boardSize ||
         col >= boardSize
-      ) {
-        console.warn('Skip invalid move', {
-          row,
-          col,
-          depth: mv.depth,
-          id: mv.id,
-        });
+      )
         return;
-      }
-
       if (b[row][col]) return;
 
-      const player = mv.player;
-      const opp = player === 1 ? 2 : 1;
-
+      const player = mv.player,
+        opp = player === 1 ? 2 : 1;
       b[row][col] = player;
 
-      // controlliamo le eventuali catture
       let captured = 0;
       let singleCaptured: [number, number] | null = null;
       const visited = new Set<string>();
@@ -179,31 +194,36 @@ export function useGobanState(
             boardSize,
           );
           if (liberties === 0) {
-            if (chain.size === 1) singleCaptured = [ny, nx]; // ko check
+            if (chain.size === 1) singleCaptured = [ny, nx];
             chain.forEach((p) => {
               const [r, c] = p.split(',').map(Number);
-              b[r][c] = 0; // rimuovi pietra
+              b[r][c] = 0;
+              visited.add(p);
             });
             captured += chain.size;
-            chain.forEach((p) => visited.add(p));
           }
         }
       });
 
-      // aggiorniamo i prigionieri
       if (player === 1) prB += captured;
       else prW += captured;
-
-      // gestione KO: solo se l'ultima mossa ha catturato esattamente 1 pietra
-      if (idx === replay.length - 1 && captured === 1 && singleCaptured) {
+      if (idx === replay.length - 1 && captured === 1 && singleCaptured)
         tmpKo = singleCaptured;
-      }
     });
 
     setBoard(b);
     setPrisoners({ black: prB, white: prW });
     setKoPoint(tmpKo);
-  }, [currentNode, boardSize, root]);
+
+    // 3) callback esercizio
+    opts?.onAfterPlay?.({
+      board: b,
+      prisoners: { black: prB, white: prW },
+      currentNode,
+      root,
+      lastMove: currentNode !== root ? currentNode : undefined,
+    });
+  }, [currentNode, boardSize, root, setup, opts]);
 
   /* --------------------------------------------------------------------- */
   /* 5. Navigazione convenience                                            */
@@ -222,20 +242,17 @@ export function useGobanState(
   /* 6. API esportata                                                      */
   /* --------------------------------------------------------------------- */
   return {
-    /* stato */
     board,
     prisoners,
     koPoint,
     currentNode,
     root,
-
-    /* azioni */
     handleIntersectionClick,
     toStart,
     back,
     forward,
     toEnd,
-    setCurrentNode, // necessario per MoveTree
+    setCurrentNode,
     meta: { size: boardSize },
     treeRev,
   } as const;
