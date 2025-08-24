@@ -46,7 +46,7 @@ export default function MoveTree({ root, currentNode, setCurrentNode }: Props) {
           if (n.branch === n.parent.branch) {
             return (
               <line
-                key={`edge-${n.id}`}
+                key={`edge-${n.parent?.depth}-${n.parent?.branch}-${n.depth}-${n.branch}`}
                 x1={pCx + NODE_RADIUS}
                 y1={pCy}
                 x2={cCx - NODE_RADIUS}
@@ -60,7 +60,7 @@ export default function MoveTree({ root, currentNode, setCurrentNode }: Props) {
           if (n.branch > n.parent.branch) {
             return (
               <polyline
-                key={`edge-${n.id}`}
+                key={`edge-${n.parent?.depth}-${n.parent?.branch}-${n.depth}-${n.branch}`}
                 points={`${pCx},${pCy + NODE_RADIUS} ${pCx},${cCy} ${cCx - NODE_RADIUS},${cCy}`}
                 fill="none"
                 stroke="black"
@@ -71,7 +71,7 @@ export default function MoveTree({ root, currentNode, setCurrentNode }: Props) {
           // branch above → horizontal at parent level
           return (
             <line
-              key={`edge-${n.id}`}
+              key={`edge-${n.parent?.depth}-${n.parent?.branch}-${n.depth}-${n.branch}`}
               x1={pCx + NODE_RADIUS}
               y1={pCy}
               x2={cCx - NODE_RADIUS}
@@ -90,7 +90,7 @@ export default function MoveTree({ root, currentNode, setCurrentNode }: Props) {
 
           return (
             <g
-              key={`node-${n.id}`}
+              key={`node-${n.depth}-${n.branch}-${n.row}-${n.col}`}
               transform={`translate(${cx},${cy})`}
               style={{ cursor: 'pointer' }}
               onClick={() => setCurrentNode(n)}

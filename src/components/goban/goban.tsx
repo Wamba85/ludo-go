@@ -83,6 +83,7 @@ export default function Goban({
 
       {showMoveTree && (
         <MoveTree
+          key={state.treeRev}
           root={state.root}
           currentNode={state.currentNode}
           setCurrentNode={state.setCurrentNode}

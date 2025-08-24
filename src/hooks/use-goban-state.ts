@@ -28,7 +28,7 @@ export function useGobanState(
   /* 1. Albero mosse                                                       */
   /* --------------------------------------------------------------------- */
   // Il root è un nodo "virtuale" che rappresenta la tavola vuota.
-  const root = useRef<MoveNode>(buildTree(sgfMoves)).current;
+  const [root, setRoot] = useState<MoveNode>(() => buildTree(sgfMoves));
   const [currentNode, setCurrentNode] = useState<MoveNode>(root);
   const nextId = useRef(1);
 
@@ -41,15 +41,21 @@ export function useGobanState(
     white: 0,
   });
   const [koPoint, setKoPoint] = useState<[number, number] | null>(null);
+  const [treeRev, setTreeRev] = useState(0);
+
+  useEffect(() => {
+    const newRoot = buildTree(sgfMoves);
+    setRoot(newRoot);
+    setCurrentNode(newRoot);
+    nextId.current = 1; // oppure riallinea con max id se lo usi
+  }, [sgfMoves]);
 
   /* --------------------------------------------------------------------- */
   /* 3. Click su una intersezione                                          */
   /* --------------------------------------------------------------------- */
   const handleIntersectionClick = (row: number, col: number) => {
-    // vietato giocare sulla posizione di ko
     if (koPoint && koPoint[0] === row && koPoint[1] === col) return;
 
-    /* 1 → se esiste già un figlio con la stessa mossa, navighiamo. */
     const existing = currentNode.children.find(
       (c) => c.row === row && c.col === col,
     );
@@ -58,14 +64,10 @@ export function useGobanState(
       return;
     }
 
-    /* 2 → determiniamo la "branch row" da assegnare al nuovo nodo. */
     let insertRow: number;
-
     if (currentNode.children.length === 0) {
-      // continua la linea principale → stessa riga del padre
       insertRow = currentNode.branch;
     } else {
-      // nuovo ramo
       const maxInSubtree = (node: MoveNode): number => {
         let m = node.branch;
         node.children.forEach((ch) => {
@@ -73,15 +75,13 @@ export function useGobanState(
         });
         return m;
       };
-
       const maxSiblingBranch = currentNode.children.reduce(
         (m, ch) => Math.max(m, maxInSubtree(ch)),
         currentNode.branch,
       );
       insertRow = maxSiblingBranch + 1;
 
-      // spostiamo in basso tutto ciò che sta da insertRow in poi
-      shiftBranches(root, insertRow);
+      shiftBranches(root, insertRow); // muta…
     }
 
     /* 3 → creiamo il nuovo nodo e aggiorniamo lo stato */
@@ -98,6 +98,9 @@ export function useGobanState(
 
     currentNode.children.push(newNode);
     setCurrentNode(newNode);
+    setTreeRev((r) => r + 1);
+
+    // setRoot({ ...root });
   };
 
   /* --------------------------------------------------------------------- */
@@ -120,13 +123,33 @@ export function useGobanState(
 
     // riproduciamo le mosse dalla radice fino al currentNode
     const replay: MoveNode[] = [];
-    for (let n: MoveNode | null = currentNode; n && n !== root; n = n.parent) {
-      replay.unshift(n);
+    for (let n: MoveNode | null = currentNode; n && n.parent; n = n.parent) {
+      replay.unshift(n); // esclude sempre il root (ha parent null)
     }
 
     replay.forEach((mv, idx) => {
-      const { row, col } = mv;
-      if (b[row][col]) return; // mossa duplicata (should not happen)
+      const row = mv.row as number;
+      const col = mv.col as number;
+
+      // salta PASS o coordinate invalide
+      if (
+        !Number.isInteger(row) ||
+        !Number.isInteger(col) ||
+        row < 0 ||
+        col < 0 ||
+        row >= boardSize ||
+        col >= boardSize
+      ) {
+        console.warn('Skip invalid move', {
+          row,
+          col,
+          depth: mv.depth,
+          id: mv.id,
+        });
+        return;
+      }
+
+      if (b[row][col]) return;
 
       const player = mv.player;
       const opp = player === 1 ? 2 : 1;
@@ -213,6 +236,7 @@ export function useGobanState(
     forward,
     toEnd,
     setCurrentNode, // necessario per MoveTree
-    meta: { size: BOARD_SIZE_DEFAULT },
+    meta: { size: boardSize },
+    treeRev,
   } as const;
 }
