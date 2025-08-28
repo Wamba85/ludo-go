@@ -89,8 +89,9 @@ export default function SgfEditorPage() {
         const stones = s.stones.slice();
         const idx = stones.findIndex((p) => p.r === r && p.c === c);
         if (idx >= 0) {
+          // nuova funzionalità: con lo strumento corrispondente → rimuovi
           if (stones[idx].color === color) stones.splice(idx, 1);
-          else stones[idx] = { r, c, color };
+          // altrimenti non fare nulla (evita sostituzioni accidentali)
         } else {
           stones.push({ r, c, color });
         }

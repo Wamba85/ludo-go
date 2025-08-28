@@ -192,7 +192,7 @@ export default function GobanBoard({
             c === currentNode.col;
 
           return (
-            <g key={`s${r}-${c}`}>
+            <g key={`s${r}-${c}`} pointerEvents="none">
               <circle
                 cx={cx}
                 cy={cy}
@@ -233,6 +233,7 @@ export default function GobanBoard({
       {/* ---------------- simbolo KO ---------------- */}
       {koPoint && (
         <text
+          pointerEvents="none"
           x={MARGIN + koPoint[1] * CELL_SIZE}
           y={MARGIN + koPoint[0] * CELL_SIZE + 6}
           textAnchor="middle"
