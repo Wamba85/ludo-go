@@ -32,3 +32,7 @@ export type Prisoners = {
   black: number;
   white: number;
 };
+
+/** Labels (marks) overlay for editor/board rendering */
+export type LabelKind = 'TR' | 'SQ' | 'CR' | 'MA'; // triangle, square, circle, X ("mark")
+export type Label = { r: number; c: number; kind: LabelKind };

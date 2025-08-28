@@ -13,6 +13,7 @@ import GobanBoard from './goban-board';
 import MoveTree from './move-tree';
 import Toolbar from './toolbar';
 import { AfterPlayCtx, Setup, useGobanState } from '@/hooks/use-goban-state';
+import type { Label } from '@/types/goban';
 import { exportMoveTreeToSgf, defaultMeta } from '@/lib/sgf/moveNode-adapter';
 import type { GoMeta, Coord } from '@/lib/sgf/go-semantic';
 
@@ -26,6 +27,8 @@ interface GobanProps {
   };
   /** Optional: intercept board clicks. Return true to stop default handling */
   onBoardClick?: (r: number, c: number) => boolean | void;
+  /** Optional labels overlay to render */
+  labels?: Label[];
 }
 
 export default function Goban({
@@ -34,6 +37,7 @@ export default function Goban({
   showMoveTree = true,
   exerciseOptions,
   onBoardClick,
+  labels,
 }: GobanProps) {
   const [sgfText, setSgfText] = useState(sgfMoves); // ← nuovo stato locale
   const state = useGobanState(sgfText, BOARD_SIZE, exerciseOptions); // ← usa sgfText
@@ -120,6 +124,7 @@ export default function Goban({
             if (onBoardClick && onBoardClick(r, c)) return;
             state.handleIntersectionClick(r, c);
           }}
+          labels={labels}
         />
       </div>
 

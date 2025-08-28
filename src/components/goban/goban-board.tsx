@@ -10,7 +10,7 @@
 import React, { useMemo } from 'react';
 import { CELL_SIZE, MARGIN } from '@/utils/constants';
 import { getChainAndLiberties } from '@/utils/go-maths';
-import type { MoveNode } from '@/types/goban';
+import type { Label, MoveNode } from '@/types/goban';
 
 /* ------------------------------------------------------------------ */
 /* Helper locali – inclusi qui per evitare dipendenze extra            */
@@ -72,6 +72,7 @@ interface Props {
   showLiberties: boolean;
   showCoordinates: boolean;
   onIntersectionClick: (r: number, c: number) => void;
+  labels?: Label[];
 }
 
 export default function GobanBoard({
@@ -82,6 +83,7 @@ export default function GobanBoard({
   showLiberties,
   showCoordinates,
   onIntersectionClick,
+  labels = [],
 }: Props) {
   const BOARD_SIZE = board.length;
   const boardPx = (BOARD_SIZE - 1) * CELL_SIZE;
@@ -229,6 +231,83 @@ export default function GobanBoard({
           );
         }),
       )}
+
+      {/* ---------------- labels (TR/SQ/CR/MA) ---------------- */}
+      {labels.map((lb) => {
+        const cx = MARGIN + lb.c * CELL_SIZE;
+        const cy = MARGIN + lb.r * CELL_SIZE;
+        const size = CELL_SIZE / 2 - 8; // padding inside cell
+        const stroke = 'red';
+        const strokeWidth = 2.5;
+        if (lb.kind === 'CR') {
+          return (
+            <circle
+              key={`L${lb.r}-${lb.c}`}
+              cx={cx}
+              cy={cy}
+              r={size - 4}
+              fill="none"
+              stroke={stroke}
+              strokeWidth={strokeWidth}
+              pointerEvents="none"
+            />
+          );
+        }
+        if (lb.kind === 'SQ') {
+          const half = size - 4;
+          return (
+            <rect
+              key={`L${lb.r}-${lb.c}`}
+              x={cx - half}
+              y={cy - half}
+              width={half * 2}
+              height={half * 2}
+              fill="none"
+              stroke={stroke}
+              strokeWidth={strokeWidth}
+              pointerEvents="none"
+            />
+          );
+        }
+        if (lb.kind === 'TR') {
+          const h = size - 4;
+          const p1 = `${cx},${cy - h}`;
+          const p2 = `${cx - h},${cy + h}`;
+          const p3 = `${cx + h},${cy + h}`;
+          return (
+            <polygon
+              key={`L${lb.r}-${lb.c}`}
+              points={`${p1} ${p2} ${p3}`}
+              fill="none"
+              stroke={stroke}
+              strokeWidth={strokeWidth}
+              pointerEvents="none"
+            />
+          );
+        }
+        // MA (cross)
+        const h = size - 4;
+        return (
+          <g key={`L${lb.r}-${lb.c}`} pointerEvents="none">
+            <line
+              x1={cx - h}
+              y1={cy - h}
+              x2={cx + h}
+              y2={cy + h}
+              stroke={stroke}
+              strokeWidth={strokeWidth}
+            />
+            <line
+              x1={cx - h}
+              y1={cy + h}
+              x2={cx + h}
+              y2={cy - h}
+              stroke={stroke}
+              strokeWidth={strokeWidth}
+            />
+          </g>
+        );
+      })}
 
       {/* ---------------- simbolo KO ---------------- */}
       {koPoint && (

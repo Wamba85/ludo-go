@@ -9,10 +9,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { loadSgfToMoveTree } from '@/lib/sgf/moveNode-adapter';
 import type { Setup } from '@/hooks/use-goban-state';
+import type { Label, LabelKind } from '@/types/goban';
 import { GoMeta } from '@/lib/sgf/go-semantic';
 
 type Mode = 'empty' | 'fromSgf';
-type Tool = 'play' | 'setupB' | 'setupW';
+type Tool =
+  | 'play'
+  | 'setupB'
+  | 'setupW'
+  | 'labelTR'
+  | 'labelSQ'
+  | 'labelCR'
+  | 'labelMA';
 
 export default function SgfEditorPage() {
   const [mode, setMode] = useState<Mode>('empty');
@@ -25,6 +33,7 @@ export default function SgfEditorPage() {
     stones: [],
     toPlay: 1,
   });
+  const [labels, setLabels] = useState<Label[]>([]);
 
   // setup.size segue boardSize
   useEffect(() => {
@@ -84,6 +93,33 @@ export default function SgfEditorPage() {
   const onBoardClick = useCallback(
     (r: number, c: number) => {
       if (tool === 'play') return false; // usa logica normale
+      // Label tools ---------------------------------------------------------
+      const labelToolMap: Record<Tool, LabelKind | null> = {
+        play: null,
+        setupB: null,
+        setupW: null,
+        labelTR: 'TR',
+        labelSQ: 'SQ',
+        labelCR: 'CR',
+        labelMA: 'MA',
+      } as const;
+      const lkind = labelToolMap[tool];
+      if (lkind) {
+        setLabels((arr) => {
+          const idx = arr.findIndex((l) => l.r === r && l.c === c);
+          if (idx >= 0) {
+            // se esiste già lo stesso simbolo → rimuovi, altrimenti sostituisci
+            const cur = arr[idx];
+            if (cur.kind === lkind)
+              return [...arr.slice(0, idx), ...arr.slice(idx + 1)];
+            const next = arr.slice();
+            next[idx] = { r, c, kind: lkind };
+            return next;
+          }
+          return [...arr, { r, c, kind: lkind }];
+        });
+        return true; // blocca logica mosse
+      }
       const color: 1 | 2 = tool === 'setupB' ? 1 : 2;
       setSetup((s) => {
         const stones = s.stones.slice();
@@ -146,6 +182,34 @@ export default function SgfEditorPage() {
                   title="Piazza pietre bianche (setup)"
                 >
                   ⚪
+                </Button>
+                <Button
+                  variant={tool === 'labelTR' ? 'default' : 'secondary'}
+                  onClick={() => setTool('labelTR')}
+                  title="Etichetta triangolo"
+                >
+                  △
+                </Button>
+                <Button
+                  variant={tool === 'labelSQ' ? 'default' : 'secondary'}
+                  onClick={() => setTool('labelSQ')}
+                  title="Etichetta quadrato"
+                >
+                  □
+                </Button>
+                <Button
+                  variant={tool === 'labelCR' ? 'default' : 'secondary'}
+                  onClick={() => setTool('labelCR')}
+                  title="Etichetta cerchio"
+                >
+                  ○
+                </Button>
+                <Button
+                  variant={tool === 'labelMA' ? 'default' : 'secondary'}
+                  onClick={() => setTool('labelMA')}
+                  title="Etichetta X"
+                >
+                  ✕
                 </Button>
               </div>
               <p className="mt-1 text-xs text-stone-500">
@@ -226,6 +290,7 @@ export default function SgfEditorPage() {
                 showMoveTree={true}
                 exerciseOptions={{ setup }}
                 onBoardClick={onBoardClick}
+                labels={labels}
               />
             </div>
           </CardContent>
