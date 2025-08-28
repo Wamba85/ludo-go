@@ -136,35 +136,18 @@ export function goToAst(meta: GoMeta, root: GoNode): SgfTree {
     if (g.move) {
       const id = g.move.color;
       const v = g.move.pass ? '' : coordToSgf(g.move.pt!);
-      hereProps.push({ id, values: [v] }); // B[]/W[] per pass come da standard
+      hereProps.push({ id, values: [v] });
     }
     if (g.props)
       for (const k of Object.keys(g.props))
         hereProps.push({ id: k, values: g.props[k] });
 
-    const seqNode = g.move ? [{ props: hereProps }] : [];
-    const mainChild = g.children[0];
-    const restVar = g.children.slice(1);
-
-    // ramo principale: concatena
-    let mainSeq: SgfNode[] = seqNode;
-    let tailTree: SgfTree | undefined;
-    if (mainChild) {
-      const sub = walk(mainChild);
-      mainSeq = seqNode.concat(sub.nodes);
-      tailTree = sub;
-    }
-
-    // variazioni
-    const children: SgfTree[] = [];
-    if (tailTree) children.push(...tailTree.children);
-    for (const v of restVar) children.push(walk(v));
-
-    return { nodes: mainSeq, children };
+    const selfNode: SgfNode[] = g.move ? [{ props: hereProps }] : [];
+    const children: SgfTree[] = g.children.map(walk);
+    return { nodes: selfNode, children };
   };
 
   const body = walk(root);
-  // unisci root + corpo
   const tree: SgfTree = {
     nodes: [nodes[0], ...body.nodes],
     children: body.children,
