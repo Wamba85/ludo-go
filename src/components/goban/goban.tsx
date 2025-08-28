@@ -16,6 +16,8 @@ import { AfterPlayCtx, Setup, useGobanState } from '@/hooks/use-goban-state';
 import type { Label } from '@/types/goban';
 import { exportMoveTreeToSgf, defaultMeta } from '@/lib/sgf/moveNode-adapter';
 import type { GoMeta, Coord } from '@/lib/sgf/go-semantic';
+import { coordToSgf } from '@/lib/sgf/go-semantic';
+import { useEffect } from 'react';
 
 interface GobanProps {
   sgfMoves: string;
@@ -29,6 +31,8 @@ interface GobanProps {
   onBoardClick?: (r: number, c: number) => boolean | void;
   /** Optional labels overlay to render */
   labels?: Label[];
+  /** Notify parent when parsed meta changes (useful to import labels/setup) */
+  onMetaChange?: (meta: GoMeta) => void;
 }
 
 export default function Goban({
@@ -38,6 +42,7 @@ export default function Goban({
   exerciseOptions,
   onBoardClick,
   labels,
+  onMetaChange,
 }: GobanProps) {
   const [sgfText, setSgfText] = useState(sgfMoves); // ← nuovo stato locale
   const state = useGobanState(sgfText, BOARD_SIZE, exerciseOptions); // ← usa sgfText
@@ -79,10 +84,28 @@ export default function Goban({
     const AW_base: Coord[] = baseSetup.AW ?? [];
     const AB: Coord[] = [...AB_base, ...AB_editor];
     const AW: Coord[] = [...AW_base, ...AW_editor];
-    const meta: GoMeta =
+    const metaSetupMerged: GoMeta =
       AB.length || AW.length
         ? { ...base, setup: { ...base.setup, AB, AW } }
         : base;
+
+    // Merge labels into extras (TR/SQ/CR/MA)
+    const extras: Record<string, string[]> = {
+      ...(metaSetupMerged.extras ?? {}),
+    };
+    if (labels && labels.length) {
+      const add = (k: 'TR' | 'SQ' | 'CR' | 'MA') => {
+        const pts = labels
+          .filter((l) => l.kind === k)
+          .map((l) => coordToSgf({ x: l.c, y: l.r }));
+        if (pts.length) extras[k] = (extras[k] ?? []).concat(pts);
+      };
+      add('TR');
+      add('SQ');
+      add('CR');
+      add('MA');
+    }
+    const meta: GoMeta = { ...metaSetupMerged, extras };
     const sgf = exportMoveTreeToSgf(meta, state.root);
     const a = document.createElement('a');
     a.href = URL.createObjectURL(
@@ -96,6 +119,11 @@ export default function Goban({
   /* flag per disabilitare i pulsanti << < > >> */
   const disableBack = state.currentNode === state.root;
   const disableForward = state.currentNode.children.length === 0;
+
+  // Propagate meta changes to parent (e.g., when opening SGF from toolbar)
+  useEffect(() => {
+    onMetaChange?.(state.meta);
+  }, [onMetaChange, state.meta]);
 
   return (
     <div className="flex gap-5">

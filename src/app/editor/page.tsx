@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { loadSgfToMoveTree } from '@/lib/sgf/moveNode-adapter';
 import type { Setup } from '@/hooks/use-goban-state';
 import type { Label, LabelKind } from '@/types/goban';
-import { GoMeta } from '@/lib/sgf/go-semantic';
+import type { GoMeta } from '@/lib/sgf/go-semantic';
 
 type Mode = 'empty' | 'fromSgf';
 type Tool =
@@ -44,6 +44,7 @@ export default function SgfEditorPage() {
     setMode('empty');
     setSgfText('');
     setSetup({ size: boardSize, stones: [], toPlay: 1 });
+    setLabels([]);
     setRev((r) => r + 1);
   }, [boardSize]);
 
@@ -63,6 +64,23 @@ export default function SgfEditorPage() {
         s?.AB?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 1 }));
         s?.AW?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 2 }));
         setSetup({ size: meta.size ?? boardSize, stones, toPlay: 1 });
+        // importa labels (TR/SQ/CR/MA) dalle extras
+        const ex = (meta.extras ?? {}) as Record<string, string[]>;
+        const toLabels = (kind: LabelKind, arr?: string[]) =>
+          (arr ?? []).map(
+            (pt) =>
+              ({
+                r: pt.charCodeAt(1) - 97,
+                c: pt.charCodeAt(0) - 97,
+                kind,
+              }) as Label,
+          );
+        setLabels([
+          ...toLabels('TR', ex.TR),
+          ...toLabels('SQ', ex.SQ),
+          ...toLabels('CR', ex.CR),
+          ...toLabels('MA', ex.MA),
+        ]);
       } catch {}
       setSgfText(txt);
       setMode('fromSgf');
@@ -84,6 +102,23 @@ export default function SgfEditorPage() {
       s?.AB?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 1 }));
       s?.AW?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 2 }));
       setSetup({ size: meta.size ?? boardSize, stones, toPlay: 1 });
+      // importa labels da extras
+      const ex = (meta.extras ?? {}) as Record<string, string[]>;
+      const toLabels = (kind: LabelKind, arr?: string[]) =>
+        (arr ?? []).map(
+          (pt) =>
+            ({
+              r: pt.charCodeAt(1) - 97,
+              c: pt.charCodeAt(0) - 97,
+              kind,
+            }) as Label,
+        );
+      setLabels([
+        ...toLabels('TR', ex.TR),
+        ...toLabels('SQ', ex.SQ),
+        ...toLabels('CR', ex.CR),
+        ...toLabels('MA', ex.MA),
+      ]);
     } catch {}
     setMode('fromSgf');
     setRev((r) => r + 1);
@@ -136,6 +171,38 @@ export default function SgfEditorPage() {
       return true;
     },
     [tool],
+  );
+
+  // Quando il Goban interno cambia meta (apertura SGF dalla sua toolbar), importa setup+labels
+  const onMetaChange = useCallback(
+    (meta: GoMeta) => {
+      setBoardSize(meta.size ?? boardSize);
+      const stones: Setup['stones'] = [];
+      meta.setup?.AB?.forEach(({ x, y }) =>
+        stones.push({ r: y, c: x, color: 1 }),
+      );
+      meta.setup?.AW?.forEach(({ x, y }) =>
+        stones.push({ r: y, c: x, color: 2 }),
+      );
+      setSetup({ size: meta.size ?? boardSize, stones, toPlay: 1 });
+      const ex = (meta.extras ?? {}) as Record<string, string[]>;
+      const toLabels = (kind: LabelKind, arr?: string[]) =>
+        (arr ?? []).map(
+          (pt) =>
+            ({
+              r: pt.charCodeAt(1) - 97,
+              c: pt.charCodeAt(0) - 97,
+              kind,
+            }) as Label,
+        );
+      setLabels([
+        ...toLabels('TR', ex.TR),
+        ...toLabels('SQ', ex.SQ),
+        ...toLabels('CR', ex.CR),
+        ...toLabels('MA', ex.MA),
+      ]);
+    },
+    [boardSize],
   );
 
   const header = useMemo(
@@ -291,6 +358,7 @@ export default function SgfEditorPage() {
                 exerciseOptions={{ setup }}
                 onBoardClick={onBoardClick}
                 labels={labels}
+                onMetaChange={onMetaChange}
               />
             </div>
           </CardContent>
