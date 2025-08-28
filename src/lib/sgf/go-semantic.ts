@@ -61,7 +61,8 @@ export function astToGo(tree: SgfTree): { meta: GoMeta; root: GoNode } {
       const prev = meta.setup![key] ?? [];
       meta.setup![key] = prev.concat(vals);
     } else {
-      meta.extras![p.id] = p.values;
+      const prev = meta.extras![p.id] ?? [];
+      meta.extras![p.id] = prev.concat(p.values);
     }
   }
 

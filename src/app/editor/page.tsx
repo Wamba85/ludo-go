@@ -109,12 +109,25 @@ export default function SgfEditorPage() {
                 kind,
               }) as Label,
           );
-        setLabels([
+        const shapes: Label[] = [
           ...toLabels('TR', ex.TR),
           ...toLabels('SQ', ex.SQ),
           ...toLabels('CR', ex.CR),
           ...toLabels('MA', ex.MA),
-        ]);
+        ];
+        const lbVals = (ex.LB ?? []).flatMap((s) => {
+          const [pt, text] = s.split(':');
+          if (!pt || !text) return [] as Label[];
+          return [
+            {
+              r: pt.charCodeAt(1) - 97,
+              c: pt.charCodeAt(0) - 97,
+              kind: 'LB' as const,
+              text,
+            },
+          ];
+        });
+        setLabels([...shapes, ...lbVals]);
       } catch {}
       setSgfText(txt);
       setMode('fromSgf');
@@ -147,12 +160,25 @@ export default function SgfEditorPage() {
               kind,
             }) as Label,
         );
-      setLabels([
+      const shapes: Label[] = [
         ...toLabels('TR', ex.TR),
         ...toLabels('SQ', ex.SQ),
         ...toLabels('CR', ex.CR),
         ...toLabels('MA', ex.MA),
-      ]);
+      ];
+      const lbVals = (ex.LB ?? []).flatMap((s) => {
+        const [pt, text] = s.split(':');
+        if (!pt || !text) return [] as Label[];
+        return [
+          {
+            r: pt.charCodeAt(1) - 97,
+            c: pt.charCodeAt(0) - 97,
+            kind: 'LB' as const,
+            text,
+          },
+        ];
+      });
+      setLabels([...shapes, ...lbVals]);
     } catch {}
     setMode('fromSgf');
     setRev((r) => r + 1);
@@ -284,12 +310,25 @@ export default function SgfEditorPage() {
               kind,
             }) as Label,
         );
-      setLabels([
+      const shapes: Label[] = [
         ...toLabels('TR', ex.TR),
         ...toLabels('SQ', ex.SQ),
         ...toLabels('CR', ex.CR),
         ...toLabels('MA', ex.MA),
-      ]);
+      ];
+      const lbVals = (ex.LB ?? []).flatMap((s) => {
+        const [pt, text] = s.split(':');
+        if (!pt || !text) return [] as Label[];
+        return [
+          {
+            r: pt.charCodeAt(1) - 97,
+            c: pt.charCodeAt(0) - 97,
+            kind: 'LB' as const,
+            text,
+          },
+        ];
+      });
+      setLabels([...shapes, ...lbVals]);
     },
     [boardSize],
   );
