@@ -22,6 +22,7 @@ interface Props {
 
 export default function MoveTree({ root, currentNode, setCurrentNode }: Props) {
   const { nodes, treeW, treeH } = useMoveTree(root);
+  const extraCol = COL_SPACING; // spazio per nodo iniziale
 
   return (
     <div
@@ -32,14 +33,59 @@ export default function MoveTree({ root, currentNode, setCurrentNode }: Props) {
         flex: '0 0 clamp(260px,28vw,340px)',
       }}
     >
-      <svg width={treeW} height={treeH}>
+      <svg width={treeW + extraCol} height={treeH}>
+        {/* root → edges verso i figli diretti */}
+        {root.children.map((child) => {
+          const pCx = TREE_MARGIN + NODE_RADIUS; // root in colonna 0
+          const pCy = TREE_MARGIN + root.branch * ROW_SPACING + NODE_RADIUS; // riga 0
+          const cCx =
+            TREE_MARGIN + (child.depth * COL_SPACING + extraCol) + NODE_RADIUS;
+          const cCy = TREE_MARGIN + child.branch * ROW_SPACING + NODE_RADIUS;
+
+          if (child.branch === root.branch) {
+            return (
+              <line
+                key={`edge-root-${child.depth}-${child.branch}`}
+                x1={pCx + NODE_RADIUS}
+                y1={pCy}
+                x2={cCx - NODE_RADIUS}
+                y2={cCy}
+                stroke="black"
+              />
+            );
+          }
+          if (child.branch > root.branch) {
+            return (
+              <polyline
+                key={`edge-root-${child.depth}-${child.branch}`}
+                points={`${pCx},${pCy + NODE_RADIUS} ${pCx},${cCy} ${cCx - NODE_RADIUS},${cCy}`}
+                fill="none"
+                stroke="black"
+              />
+            );
+          }
+          return (
+            <line
+              key={`edge-root-${child.depth}-${child.branch}`}
+              x1={pCx + NODE_RADIUS}
+              y1={pCy}
+              x2={cCx - NODE_RADIUS}
+              y2={pCy}
+              stroke="black"
+            />
+          );
+        })}
         {/* edges */}
         {nodes.map((n) => {
           if (!n.parent || n.parent === root) return null;
 
-          const pCx = TREE_MARGIN + n.parent.depth * COL_SPACING + NODE_RADIUS;
+          const pCx =
+            TREE_MARGIN +
+            (n.parent.depth * COL_SPACING + extraCol) +
+            NODE_RADIUS;
           const pCy = TREE_MARGIN + n.parent.branch * ROW_SPACING + NODE_RADIUS;
-          const cCx = TREE_MARGIN + n.depth * COL_SPACING + NODE_RADIUS;
+          const cCx =
+            TREE_MARGIN + (n.depth * COL_SPACING + extraCol) + NODE_RADIUS;
           const cCy = TREE_MARGIN + n.branch * ROW_SPACING + NODE_RADIUS;
 
           // same row → horizontal
@@ -81,9 +127,35 @@ export default function MoveTree({ root, currentNode, setCurrentNode }: Props) {
           );
         })}
 
+        {/* nodo iniziale (cliccabile per tornare all'inizio) */}
+        {(() => {
+          const cx = TREE_MARGIN + NODE_RADIUS; // colonna 0
+          const cy = TREE_MARGIN + root.branch * ROW_SPACING + NODE_RADIUS; // riga 0
+          const selected = currentNode === root;
+          return (
+            <g
+              key={`node-root`}
+              transform={`translate(${cx},${cy})`}
+              style={{ cursor: 'pointer' }}
+              onClick={() => setCurrentNode(root)}
+            >
+              <circle
+                r={NODE_RADIUS}
+                fill="#f7f7f7"
+                stroke={selected ? 'red' : 'black'}
+                strokeWidth={selected ? 2 : 1}
+              />
+              <text y={4} textAnchor="middle" fontSize={14} fill="#333">
+                0
+              </text>
+            </g>
+          );
+        })()}
+
         {/* nodes */}
         {nodes.map((n) => {
-          const cx = TREE_MARGIN + n.depth * COL_SPACING + NODE_RADIUS;
+          const cx =
+            TREE_MARGIN + (n.depth * COL_SPACING + extraCol) + NODE_RADIUS;
           const cy = TREE_MARGIN + n.branch * ROW_SPACING + NODE_RADIUS;
           const selected = n === currentNode;
           const isBlack = n.player === 1;
