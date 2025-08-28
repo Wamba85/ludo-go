@@ -5,8 +5,9 @@
  */
 
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { buildTree } from '@/lib/parser-sgf-meta';
+import { loadSgfToMoveTree, defaultMeta } from '@/lib/sgf/moveNode-adapter';
 import {
   createInitialBoard,
   getChainAndLiberties,
@@ -43,7 +44,21 @@ export function useGobanState(
   /* 1. Albero mosse                                                       */
   /* --------------------------------------------------------------------- */
   // Il root è un nodo "virtuale" che rappresenta la tavola vuota.
-  const [root, setRoot] = useState<MoveNode>(() => buildTree(sgfMoves));
+  // Parse SGF completo (AB/AW ecc.) con fallback al builder leggero.
+  const initialParsed = useMemo(() => {
+    const s = sgfMoves?.trim() ?? '';
+    if (s.startsWith('(')) {
+      try {
+        const { meta, root } = loadSgfToMoveTree(s);
+        return { meta, root };
+      } catch (e) {
+        // fallthrough to simple builder
+      }
+    }
+    return { meta: defaultMeta(boardSize), root: buildTree(sgfMoves) };
+  }, []);
+  const [meta, setMeta] = useState(initialParsed.meta);
+  const [root, setRoot] = useState<MoveNode>(initialParsed.root);
   const [currentNode, setCurrentNode] = useState<MoveNode>(root);
   const nextId = useRef(1);
 
@@ -58,17 +73,52 @@ export function useGobanState(
   const [koPoint, setKoPoint] = useState<[number, number] | null>(null);
   const [treeRev, setTreeRev] = useState(0);
 
-  const setup = opts?.setup;
+  // Deriva setup: preferisci quello esplicito da opts, altrimenti da meta.setup (AB/AW)
+  const derivedSetup: Setup | undefined = useMemo(() => {
+    if (opts?.setup) return opts.setup;
+    const m: any = meta as any;
+    const metaSetup = m?.setup as
+      | { AB?: { x: number; y: number }[]; AW?: { x: number; y: number }[] }
+      | undefined;
+    if (!metaSetup) return undefined;
+    const stones: { r: number; c: number; color: 1 | 2 }[] = [];
+    metaSetup.AB?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 1 }));
+    metaSetup.AW?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 2 }));
+    // Deduci toPlay dal primo figlio se disponibile, altrimenti Nero
+    const first = root.children[0];
+    const toPlay: 1 | 2 = first ? first.player : 1;
+    return { size: (meta as any)?.size ?? boardSize, stones, toPlay };
+  }, [opts?.setup, meta, root, boardSize]);
 
   const nextPlayer =
     currentNode === root
-      ? (setup?.toPlay ?? (currentNode.player === 1 ? 2 : 1))
+      ? (derivedSetup?.toPlay ?? (currentNode.player === 1 ? 2 : 1))
       : currentNode.player === 1
         ? 2
         : 1;
 
+  // Stabilizza la callback onAfterPlay per evitare ri-render non necessari
+  const onAfterPlayRef = useRef(opts?.onAfterPlay);
   useEffect(() => {
+    onAfterPlayRef.current = opts?.onAfterPlay;
+  }, [opts?.onAfterPlay]);
+
+  useEffect(() => {
+    const s = sgfMoves?.trim() ?? '';
+    if (s.startsWith('(')) {
+      try {
+        const { meta: m, root: r } = loadSgfToMoveTree(s);
+        setMeta(m);
+        setRoot(r);
+        setCurrentNode(r);
+        nextId.current = 1;
+        return;
+      } catch (e) {
+        // fallback sotto
+      }
+    }
     const newRoot = buildTree(sgfMoves);
+    setMeta(defaultMeta(boardSize));
     setRoot(newRoot);
     setCurrentNode(newRoot);
     nextId.current = 1; // oppure riallinea con max id se lo usi
@@ -131,9 +181,10 @@ export function useGobanState(
     const b = createInitialBoard(boardSize);
 
     // 1) applica setup iniziale
-    if (setup) {
-      if (setup.size !== boardSize) console.warn('setup.size != boardSize');
-      for (const s of setup.stones) {
+    if (derivedSetup) {
+      if (derivedSetup.size !== boardSize)
+        console.warn('setup.size != boardSize');
+      for (const s of derivedSetup.stones) {
         if (s.r >= 0 && s.r < boardSize && s.c >= 0 && s.c < boardSize)
           b[s.r][s.c] = s.color;
       }
@@ -215,15 +266,15 @@ export function useGobanState(
     setPrisoners({ black: prB, white: prW });
     setKoPoint(tmpKo);
 
-    // 3) callback esercizio
-    opts?.onAfterPlay?.({
+    // 3) callback esercizio (usando ref stabile)
+    onAfterPlayRef.current?.({
       board: b,
       prisoners: { black: prB, white: prW },
       currentNode,
       root,
       lastMove: currentNode !== root ? currentNode : undefined,
     });
-  }, [currentNode, boardSize, root, setup, opts]);
+  }, [currentNode, boardSize, root, derivedSetup]);
 
   /* --------------------------------------------------------------------- */
   /* 5. Navigazione convenience                                            */
@@ -253,7 +304,7 @@ export function useGobanState(
     forward,
     toEnd,
     setCurrentNode,
-    meta: { size: boardSize },
+    meta,
     treeRev,
   } as const;
 }

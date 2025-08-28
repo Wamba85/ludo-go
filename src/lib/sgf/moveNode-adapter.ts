@@ -11,7 +11,7 @@ function goToMoveTree(rootGo: GoNode): MoveNode {
 
   const root: MoveNode = {
     id: nextId++,
-    parent: null as unknown as MoveNode,
+    parent: null,
     children: [],
     player: 2, // placeholder per root
     row: -1,
@@ -19,7 +19,6 @@ function goToMoveTree(rootGo: GoNode): MoveNode {
     depth: -1,
     branch: 0,
   };
-  root.parent = root;
 
   type Item = { go: GoNode; uiParent: MoveNode; branchBase: number };
   const queue: Item[] = rootGo.children.map((ch, i) => ({
