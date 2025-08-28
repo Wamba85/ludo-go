@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { loadSgfToMoveTree } from '@/lib/sgf/moveNode-adapter';
 import type { Setup } from '@/hooks/use-goban-state';
+import { GoMeta } from '@/lib/sgf/go-semantic';
 
 type Mode = 'empty' | 'fromSgf';
 type Tool = 'play' | 'setupB' | 'setupW';
@@ -35,7 +36,7 @@ export default function SgfEditorPage() {
     setSgfText('');
     setSetup({ size: boardSize, stones: [], toPlay: 1 });
     setRev((r) => r + 1);
-  }, []);
+  }, [boardSize]);
 
   const handleSgfFile = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,10 +50,7 @@ export default function SgfEditorPage() {
         setBoardSize(meta.size ?? boardSize);
         // importa AB/AW nel setup editor così l'export li includerà e l'utente può modificarli
         const stones: Setup['stones'] = [];
-        const m: any = meta as any;
-        const s = m?.setup as
-          | { AB?: { x: number; y: number }[]; AW?: { x: number; y: number }[] }
-          | undefined;
+        const s: GoMeta['setup'] | undefined = meta.setup;
         s?.AB?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 1 }));
         s?.AW?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 2 }));
         setSetup({ size: meta.size ?? boardSize, stones, toPlay: 1 });
@@ -73,10 +71,7 @@ export default function SgfEditorPage() {
       const { meta } = loadSgfToMoveTree(wrapped);
       setBoardSize(meta.size ?? boardSize);
       const stones: Setup['stones'] = [];
-      const m: any = meta as any;
-      const s = m?.setup as
-        | { AB?: { x: number; y: number }[]; AW?: { x: number; y: number }[] }
-        | undefined;
+      const s: GoMeta['setup'] | undefined = meta.setup;
       s?.AB?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 1 }));
       s?.AW?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 2 }));
       setSetup({ size: meta.size ?? boardSize, stones, toPlay: 1 });

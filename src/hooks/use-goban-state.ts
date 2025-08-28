@@ -8,6 +8,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { buildTree } from '@/lib/parser-sgf-meta';
 import { loadSgfToMoveTree, defaultMeta } from '@/lib/sgf/moveNode-adapter';
+import type { GoMeta } from '@/lib/sgf/go-semantic';
 import {
   createInitialBoard,
   getChainAndLiberties,
@@ -45,18 +46,18 @@ export function useGobanState(
   /* --------------------------------------------------------------------- */
   // Il root è un nodo "virtuale" che rappresenta la tavola vuota.
   // Parse SGF completo (AB/AW ecc.) con fallback al builder leggero.
-  const initialParsed = useMemo(() => {
+  const initialParsed = useMemo<{ meta: GoMeta; root: MoveNode }>(() => {
     const s = sgfMoves?.trim() ?? '';
     if (s.startsWith('(')) {
       try {
         const { meta, root } = loadSgfToMoveTree(s);
         return { meta, root };
-      } catch (e) {
+      } catch {
         // fallthrough to simple builder
       }
     }
     return { meta: defaultMeta(boardSize), root: buildTree(sgfMoves) };
-  }, []);
+  }, [boardSize, sgfMoves]);
   const [meta, setMeta] = useState(initialParsed.meta);
   const [root, setRoot] = useState<MoveNode>(initialParsed.root);
   const [currentNode, setCurrentNode] = useState<MoveNode>(root);
@@ -75,11 +76,7 @@ export function useGobanState(
 
   // Deriva setup combinando meta.setup (AB/AW) con l'overlay passato via opts.setup
   const derivedSetup: Setup | undefined = useMemo(() => {
-    const m: any = meta as any;
-    const metaSetup = (m?.setup ?? {}) as {
-      AB?: { x: number; y: number }[];
-      AW?: { x: number; y: number }[];
-    };
+    const metaSetup = meta?.setup ?? {};
     const stones: { r: number; c: number; color: 1 | 2 }[] = [];
     // 1) Base: AB/AW dal file SGF
     metaSetup.AB?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 1 }));
@@ -94,7 +91,7 @@ export function useGobanState(
       stones.splice(0, stones.length, ...merged);
     }
     // 3) Size e toPlay
-    const size = opts?.setup?.size ?? (meta as any)?.size ?? boardSize;
+    const size = opts?.setup?.size ?? meta.size ?? boardSize;
     const first = root.children[0];
     const toPlay: 1 | 2 = opts?.setup?.toPlay ?? (first ? first.player : 1);
     // Se non c'è nessuna pietra e nessun overlay, ritorna undefined per non forzare setup
@@ -125,7 +122,7 @@ export function useGobanState(
         setCurrentNode(r);
         nextId.current = 1;
         return;
-      } catch (e) {
+      } catch {
         // fallback sotto
       }
     }
@@ -134,7 +131,7 @@ export function useGobanState(
     setRoot(newRoot);
     setCurrentNode(newRoot);
     nextId.current = 1; // oppure riallinea con max id se lo usi
-  }, [sgfMoves]);
+  }, [boardSize, sgfMoves]);
 
   /* --------------------------------------------------------------------- */
   /* 3. Click su una intersezione                                          */

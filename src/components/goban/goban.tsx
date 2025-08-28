@@ -14,6 +14,7 @@ import MoveTree from './move-tree';
 import Toolbar from './toolbar';
 import { AfterPlayCtx, Setup, useGobanState } from '@/hooks/use-goban-state';
 import { exportMoveTreeToSgf, defaultMeta } from '@/lib/sgf/moveNode-adapter';
+import type { GoMeta, Coord } from '@/lib/sgf/go-semantic';
 
 interface GobanProps {
   sgfMoves: string;
@@ -49,7 +50,7 @@ export default function Goban({
       for (let i = 0; i < n.children.length; i++) stack.push(n.children[i]);
     }
     return false;
-  }, [state.root, state.treeRev]);
+  }, [state.root]);
 
   // ↓↓↓ AGGIUNTA: due azioni SGF
   const handleOpenSgf = async (f: File) => {
@@ -69,14 +70,14 @@ export default function Goban({
     const AW_editor = editorStones
       .filter((s) => s.color === 2)
       .map((s) => ({ x: s.c, y: s.r }));
-    const baseSetup = (base as any)?.setup ?? {};
-    const AB_base = baseSetup.AB ?? [];
-    const AW_base = baseSetup.AW ?? [];
-    const AB = [...AB_base, ...AB_editor];
-    const AW = [...AW_base, ...AW_editor];
-    const meta =
+    const baseSetup = base.setup ?? {};
+    const AB_base: Coord[] = baseSetup.AB ?? [];
+    const AW_base: Coord[] = baseSetup.AW ?? [];
+    const AB: Coord[] = [...AB_base, ...AB_editor];
+    const AW: Coord[] = [...AW_base, ...AW_editor];
+    const meta: GoMeta =
       AB.length || AW.length
-        ? ({ ...(base as any), setup: { AB, AW } } as any)
+        ? { ...base, setup: { ...base.setup, AB, AW } }
         : base;
     const sgf = exportMoveTreeToSgf(meta, state.root);
     const a = document.createElement('a');
@@ -132,7 +133,7 @@ export default function Goban({
       )}
       {showMoveTree && isTreeTooLarge && (
         <div className="text-xs text-stone-500 mt-2">
-          L'albero delle mosse è molto grande: nascosto per prestazioni.
+          L&apos;albero delle mosse è molto grande: nascosto per prestazioni.
         </div>
       )}
     </div>
