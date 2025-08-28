@@ -47,6 +47,15 @@ export default function SgfEditorPage() {
         const wrapped = txt.trim().startsWith('(') ? txt : `(${txt})`;
         const { meta } = loadSgfToMoveTree(wrapped);
         setBoardSize(meta.size ?? boardSize);
+        // importa AB/AW nel setup editor così l'export li includerà e l'utente può modificarli
+        const stones: Setup['stones'] = [];
+        const m: any = meta as any;
+        const s = m?.setup as
+          | { AB?: { x: number; y: number }[]; AW?: { x: number; y: number }[] }
+          | undefined;
+        s?.AB?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 1 }));
+        s?.AW?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 2 }));
+        setSetup({ size: meta.size ?? boardSize, stones, toPlay: 1 });
       } catch {}
       setSgfText(txt);
       setMode('fromSgf');
@@ -63,6 +72,14 @@ export default function SgfEditorPage() {
       const wrapped = sgfText.trim().startsWith('(') ? sgfText : `(${sgfText})`;
       const { meta } = loadSgfToMoveTree(wrapped);
       setBoardSize(meta.size ?? boardSize);
+      const stones: Setup['stones'] = [];
+      const m: any = meta as any;
+      const s = m?.setup as
+        | { AB?: { x: number; y: number }[]; AW?: { x: number; y: number }[] }
+        | undefined;
+      s?.AB?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 1 }));
+      s?.AW?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 2 }));
+      setSetup({ size: meta.size ?? boardSize, stones, toPlay: 1 });
     } catch {}
     setMode('fromSgf');
     setRev((r) => r + 1);

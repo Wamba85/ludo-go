@@ -73,21 +73,33 @@ export function useGobanState(
   const [koPoint, setKoPoint] = useState<[number, number] | null>(null);
   const [treeRev, setTreeRev] = useState(0);
 
-  // Deriva setup: preferisci quello esplicito da opts, altrimenti da meta.setup (AB/AW)
+  // Deriva setup combinando meta.setup (AB/AW) con l'overlay passato via opts.setup
   const derivedSetup: Setup | undefined = useMemo(() => {
-    if (opts?.setup) return opts.setup;
     const m: any = meta as any;
-    const metaSetup = m?.setup as
-      | { AB?: { x: number; y: number }[]; AW?: { x: number; y: number }[] }
-      | undefined;
-    if (!metaSetup) return undefined;
+    const metaSetup = (m?.setup ?? {}) as {
+      AB?: { x: number; y: number }[];
+      AW?: { x: number; y: number }[];
+    };
     const stones: { r: number; c: number; color: 1 | 2 }[] = [];
+    // 1) Base: AB/AW dal file SGF
     metaSetup.AB?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 1 }));
     metaSetup.AW?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 2 }));
-    // Deduci toPlay dal primo figlio se disponibile, altrimenti Nero
+    // 2) Overlay: setup esterno (editor). Sostituisce/aggiunge
+    if (opts?.setup?.stones?.length) {
+      const key = (r: number, c: number) => `${r},${c}`;
+      const map = new Map<string, { r: number; c: number; color: 1 | 2 }>();
+      stones.forEach((s) => map.set(key(s.r, s.c), s));
+      opts.setup.stones.forEach((s) => map.set(key(s.r, s.c), s));
+      const merged = Array.from(map.values());
+      stones.splice(0, stones.length, ...merged);
+    }
+    // 3) Size e toPlay
+    const size = opts?.setup?.size ?? (meta as any)?.size ?? boardSize;
     const first = root.children[0];
-    const toPlay: 1 | 2 = first ? first.player : 1;
-    return { size: (meta as any)?.size ?? boardSize, stones, toPlay };
+    const toPlay: 1 | 2 = opts?.setup?.toPlay ?? (first ? first.player : 1);
+    // Se non c'è nessuna pietra e nessun overlay, ritorna undefined per non forzare setup
+    if (stones.length === 0 && !opts?.setup) return undefined;
+    return { size, stones, toPlay };
   }, [opts?.setup, meta, root, boardSize]);
 
   const nextPlayer =
@@ -305,6 +317,7 @@ export function useGobanState(
     toEnd,
     setCurrentNode,
     meta,
+    appliedSetup: derivedSetup,
     treeRev,
   } as const;
 }

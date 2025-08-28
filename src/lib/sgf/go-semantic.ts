@@ -57,7 +57,9 @@ export function astToGo(tree: SgfTree): { meta: GoMeta; root: GoNode } {
     else if (p.id === 'CA') meta.ca = p.values[0];
     else if (p.id === 'AB' || p.id === 'AW' || p.id === 'AE') {
       const key = p.id as 'AB' | 'AW' | 'AE';
-      meta.setup![key] = p.values.filter(Boolean).map(sgfPointToCoord);
+      const vals = p.values.filter(Boolean).map(sgfPointToCoord);
+      const prev = meta.setup![key] ?? [];
+      meta.setup![key] = prev.concat(vals);
     } else {
       meta.extras![p.id] = p.values;
     }

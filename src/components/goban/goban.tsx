@@ -60,8 +60,9 @@ export default function Goban({
   const handleExportSgf = () => {
     // Base meta
     const base = state.meta ?? defaultMeta(BOARD_SIZE);
-    // Merge: meta.setup (se presente) + override dall'editor
-    const editorStones = exerciseOptions?.setup?.stones ?? [];
+    // Merge: meta.setup (se presente) + setup applicato (editor o da SGF)
+    const editorStones =
+      exerciseOptions?.setup?.stones ?? state.appliedSetup?.stones ?? [];
     const AB_editor = editorStones
       .filter((s) => s.color === 1)
       .map((s) => ({ x: s.c, y: s.r }));
