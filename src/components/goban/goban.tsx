@@ -104,6 +104,10 @@ export default function Goban({
       add('SQ');
       add('CR');
       add('MA');
+      const lbVals = labels
+        .filter((l) => l.kind === 'LB' && l.text)
+        .map((l) => `${coordToSgf({ x: l.c, y: l.r })}:${l.text}`);
+      if (lbVals.length) extras.LB = (extras.LB ?? []).concat(lbVals);
     }
     const meta: GoMeta = { ...metaSetupMerged, extras };
     const sgf = exportMoveTreeToSgf(meta, state.root);

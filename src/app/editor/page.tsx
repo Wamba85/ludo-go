@@ -12,6 +12,38 @@ import type { Setup } from '@/hooks/use-goban-state';
 import type { Label, LabelKind } from '@/types/goban';
 import type { GoMeta } from '@/lib/sgf/go-semantic';
 
+// Helpers per numeri/lettere – definiti fuori dal componente per evitare
+// dipendenze nei callback (eslint react-hooks/exhaustive-deps)
+function letterToRank(s: string): number {
+  let n = 0;
+  for (let i = 0; i < s.length; i++) n = n * 26 + (s.charCodeAt(i) - 64); // 'A' = 65 -> 1
+  return n;
+}
+function rankToLetters(rank: number): string {
+  let r = rank;
+  let out = '';
+  while (r > 0) {
+    r--; // 1-based
+    out = String.fromCharCode(65 + (r % 26)) + out;
+    r = Math.floor(r / 26);
+  }
+  return out || 'A';
+}
+function nextNumber(arr: Label[]): number {
+  let max = 0;
+  for (const l of arr)
+    if (l.kind === 'LB' && l.text && /^\d+$/.test(l.text))
+      max = Math.max(max, parseInt(l.text, 10));
+  return max; // caller aggiunge +1
+}
+function nextLetterRank(arr: Label[]): number {
+  let max = 0;
+  for (const l of arr)
+    if (l.kind === 'LB' && l.text && /^[A-Z]+$/.test(l.text))
+      max = Math.max(max, letterToRank(l.text));
+  return max;
+}
+
 type Mode = 'empty' | 'fromSgf';
 type Tool =
   | 'play'
@@ -20,7 +52,9 @@ type Tool =
   | 'labelTR'
   | 'labelSQ'
   | 'labelCR'
-  | 'labelMA';
+  | 'labelMA'
+  | 'labelNUM'
+  | 'labelLET';
 
 export default function SgfEditorPage() {
   const [mode, setMode] = useState<Mode>('empty');
@@ -137,13 +171,66 @@ export default function SgfEditorPage() {
         labelSQ: 'SQ',
         labelCR: 'CR',
         labelMA: 'MA',
+        labelNUM: 'LB',
+        labelLET: 'LB',
       } as const;
       const lkind = labelToolMap[tool];
       if (lkind) {
+        // Gestione specializzata per numeri/lettere
+        if (tool === 'labelNUM' || tool === 'labelLET') {
+          setLabels((arr) => {
+            const isNumber = tool === 'labelNUM';
+            const atIdx = arr.findIndex(
+              (l) => l.r === r && l.c === c && l.kind === 'LB',
+            );
+            if (atIdx >= 0) {
+              // Click su un'etichetta testo → se è numero/lettera coerente, rimuovi e rinumera
+              const cur = arr[atIdx];
+              const text = cur.text ?? '';
+              const isCurNum = /^\d+$/.test(text);
+              const isCurLet = /^[A-Z]+$/.test(text);
+              if ((isNumber && isCurNum) || (!isNumber && isCurLet)) {
+                const removedRank = isNumber
+                  ? parseInt(text, 10)
+                  : letterToRank(text);
+                const next = arr.filter((_, i) => i !== atIdx);
+                // Rinumerazione: decrementa tutti quelli con rank maggiore
+                return next.map((l) => {
+                  if (l.kind !== 'LB' || !l.text) return l;
+                  if (isNumber && /^\d+$/.test(l.text)) {
+                    const v = parseInt(l.text, 10);
+                    if (v > removedRank) return { ...l, text: String(v - 1) };
+                    return l;
+                  }
+                  if (!isNumber && /^[A-Z]+$/.test(l.text)) {
+                    const v = letterToRank(l.text);
+                    if (v > removedRank)
+                      return { ...l, text: rankToLetters(v - 1) };
+                    return l;
+                  }
+                  return l;
+                });
+              }
+              // Se c'è un LB ma di tipo diverso (es. lettera vs numero), sostituisci con il prossimo valore
+              const next = arr.slice();
+              const nextText = isNumber
+                ? String(nextNumber(arr) + 1)
+                : rankToLetters(nextLetterRank(arr) + 1);
+              next[atIdx] = { r, c, kind: 'LB', text: nextText };
+              return next;
+            }
+            // Aggiunta di un nuovo numero/lettera con valore successivo
+            const nextText = isNumber
+              ? String(nextNumber(arr) + 1)
+              : rankToLetters(nextLetterRank(arr) + 1);
+            return [...arr, { r, c, kind: 'LB', text: nextText }];
+          });
+          return true;
+        }
+        // TR/SQ/CR/MA: toggle/sostituisci come prima
         setLabels((arr) => {
           const idx = arr.findIndex((l) => l.r === r && l.c === c);
           if (idx >= 0) {
-            // se esiste già lo stesso simbolo → rimuovi, altrimenti sostituisci
             const cur = arr[idx];
             if (cur.kind === lkind)
               return [...arr.slice(0, idx), ...arr.slice(idx + 1)];
@@ -172,6 +259,8 @@ export default function SgfEditorPage() {
     },
     [tool],
   );
+
+  // Helpers numeri/lettere definiti fuori dal componente (vedi top file)
 
   // Quando il Goban interno cambia meta (apertura SGF dalla sua toolbar), importa setup+labels
   const onMetaChange = useCallback(
@@ -235,6 +324,20 @@ export default function SgfEditorPage() {
                   title="Gioca pietre alternate"
                 >
                   ↔︎
+                </Button>
+                <Button
+                  variant={tool === 'labelNUM' ? 'default' : 'secondary'}
+                  onClick={() => setTool('labelNUM')}
+                  title="Etichetta numerica sequenziale"
+                >
+                  1
+                </Button>
+                <Button
+                  variant={tool === 'labelLET' ? 'default' : 'secondary'}
+                  onClick={() => setTool('labelLET')}
+                  title="Etichetta alfabetica sequenziale"
+                >
+                  A
                 </Button>
                 <Button
                   variant={tool === 'setupB' ? 'default' : 'secondary'}

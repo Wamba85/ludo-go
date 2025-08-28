@@ -232,13 +232,31 @@ export default function GobanBoard({
         }),
       )}
 
-      {/* ---------------- labels (TR/SQ/CR/MA) ---------------- */}
+      {/* ---------------- labels (TR/SQ/CR/MA/LB) ---------------- */}
       {labels.map((lb) => {
         const cx = MARGIN + lb.c * CELL_SIZE;
         const cy = MARGIN + lb.r * CELL_SIZE;
         const size = CELL_SIZE / 2 - 8; // padding inside cell
         const stroke = 'red';
         const strokeWidth = 2.5;
+        if (lb.kind === 'LB' && lb.text) {
+          const cellVal = board[lb.r]?.[lb.c] ?? 0;
+          const fill = cellVal === 1 ? 'white' : 'black';
+          return (
+            <text
+              key={`LB${lb.r}-${lb.c}`}
+              x={cx}
+              y={cy + 5}
+              textAnchor="middle"
+              fontSize={16}
+              fill={fill}
+              fontWeight={700}
+              pointerEvents="none"
+            >
+              {lb.text}
+            </text>
+          );
+        }
         if (lb.kind === 'CR') {
           return (
             <circle

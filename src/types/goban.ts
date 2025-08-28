@@ -34,5 +34,5 @@ export type Prisoners = {
 };
 
 /** Labels (marks) overlay for editor/board rendering */
-export type LabelKind = 'TR' | 'SQ' | 'CR' | 'MA'; // triangle, square, circle, X ("mark")
-export type Label = { r: number; c: number; kind: LabelKind };
+export type LabelKind = 'TR' | 'SQ' | 'CR' | 'MA' | 'LB'; // shapes + free text label (LB)
+export type Label = { r: number; c: number; kind: LabelKind; text?: string };
