@@ -127,13 +127,38 @@ export default function Goban({
 
   // Propagate meta changes to parent (e.g., when opening SGF from toolbar)
   // Use a ref to avoid firing the effect when the callback identity changes.
-  const onMetaChangeRef = useRef<typeof onMetaChange>();
+  const onMetaChangeRef = useRef<typeof onMetaChange>(undefined);
   useEffect(() => {
     onMetaChangeRef.current = onMetaChange;
   }, [onMetaChange]);
   useEffect(() => {
     onMetaChangeRef.current?.(state.meta);
   }, [state.meta]);
+
+  // Limit board size so it always fits the viewport height
+  const boardBoxRef = useRef<HTMLDivElement>(null);
+  const [maxBoardWidth, setMaxBoardWidth] = useState<number | undefined>(
+    undefined,
+  );
+  useEffect(() => {
+    const recompute = () => {
+      const el = boardBoxRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const padding = 16; // bottom safety margin
+      const avail = Math.max(120, Math.floor(vh - rect.top - padding));
+      setMaxBoardWidth(avail);
+    };
+    const raf = requestAnimationFrame(recompute);
+    window.addEventListener('resize', recompute);
+    window.addEventListener('orientationchange', recompute);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', recompute);
+      window.removeEventListener('orientationchange', recompute);
+    };
+  }, []);
 
   return (
     <div className="flex flex-col gap-4">
@@ -153,20 +178,27 @@ export default function Goban({
 
       {/* Body: board left, side column right (stacks on small screens) */}
       <div className="flex flex-col md:flex-row gap-4 items-start">
-        <div className="flex-1 min-w-0">
-          <GobanBoard
-            board={state.board}
-            currentNode={state.currentNode}
-            root={state.root}
-            koPoint={state.koPoint}
-            showLiberties={showLiberties}
-            showCoordinates={showCoordinates}
-            onIntersectionClick={(r, c) => {
-              if (onBoardClick && onBoardClick(r, c)) return;
-              state.handleIntersectionClick(r, c);
+        <div className="flex-1 min-w-0" ref={boardBoxRef}>
+          <div
+            style={{
+              width: '100%',
+              maxWidth: maxBoardWidth ? `${maxBoardWidth}px` : undefined,
             }}
-            labels={labels}
-          />
+          >
+            <GobanBoard
+              board={state.board}
+              currentNode={state.currentNode}
+              root={state.root}
+              koPoint={state.koPoint}
+              showLiberties={showLiberties}
+              showCoordinates={showCoordinates}
+              onIntersectionClick={(r, c) => {
+                if (onBoardClick && onBoardClick(r, c)) return;
+                state.handleIntersectionClick(r, c);
+              }}
+              labels={labels}
+            />
+          </div>
         </div>
 
         {/* Right column: comment panel + move tree */}
