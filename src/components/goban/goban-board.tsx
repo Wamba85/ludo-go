@@ -149,11 +149,12 @@ export default function GobanBoard({
 
   return (
     <svg
-      width={svgW}
-      height={svgH}
+      width="100%"
+      viewBox={`0 0 ${svgW} ${svgH}`}
       className="bg-[#f0d9b5] select-none"
       role="img"
       aria-label="Goban board"
+      style={{ height: 'auto', display: 'block' }}
     >
       {/* ---------------- coordinate ---------------- */}
       {showCoordinates &&
