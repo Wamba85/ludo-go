@@ -139,6 +139,8 @@ export default function MoveTree({ root, currentNode, setCurrentNode }: Props) {
               style={{ cursor: 'pointer' }}
               onClick={() => setCurrentNode(root)}
             >
+              {/* tooltip con eventuale commento */}
+              {root.comment && <title>{root.comment}</title>}
               <circle
                 r={NODE_RADIUS}
                 fill="#f7f7f7"
@@ -148,6 +150,17 @@ export default function MoveTree({ root, currentNode, setCurrentNode }: Props) {
               <text y={4} textAnchor="middle" fontSize={14} fill="#333">
                 0
               </text>
+              {/* indicatore commento (pallino piccolo in alto‑destra) */}
+              {root.comment && root.comment.trim() && (
+                <circle
+                  cx={NODE_RADIUS - 4}
+                  cy={-(NODE_RADIUS - 4)}
+                  r={3}
+                  fill="#0ea5e9" /* sky-500 */
+                  stroke="white"
+                  strokeWidth={1}
+                />
+              )}
             </g>
           );
         })()}
@@ -167,6 +180,8 @@ export default function MoveTree({ root, currentNode, setCurrentNode }: Props) {
               style={{ cursor: 'pointer' }}
               onClick={() => setCurrentNode(n)}
             >
+              {/* tooltip con eventuale commento */}
+              {n.comment && <title>{n.comment}</title>}
               <circle
                 r={NODE_RADIUS}
                 fill={isBlack ? 'black' : 'white'}
@@ -181,6 +196,17 @@ export default function MoveTree({ root, currentNode, setCurrentNode }: Props) {
               >
                 {n.depth + 1}
               </text>
+              {/* indicatore commento (pallino piccolo in alto‑destra) */}
+              {n.comment && n.comment.trim() && (
+                <circle
+                  cx={NODE_RADIUS - 4}
+                  cy={-(NODE_RADIUS - 4)}
+                  r={3}
+                  fill="#0ea5e9" /* sky-500 */
+                  stroke="white"
+                  strokeWidth={1}
+                />
+              )}
             </g>
           );
         })}
