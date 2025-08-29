@@ -60,6 +60,59 @@ function useChainLiberties(board: number[][]) {
   }, [BOARD_SIZE, board]);
 }
 
+/**
+ * Restituisce le posizioni (r,c) dei punti stella da visualizzare.
+ * Richieste:
+ * - 19x19: corner star (4-4), side star (10-4) e tengen (10-10)
+ * - 13x13: solo corner star (4-4) e tengen
+ * - 9x9: come 13x13 ma i corner star sono i 3-3; tengen al centro
+ */
+function getStarPoints(size: number): Array<[number, number]> {
+  const pts: Array<[number, number]> = [];
+  if (size <= 1) return pts;
+  const max = size - 1;
+  const mid = Math.floor(max / 2);
+
+  if (size === 19) {
+    const o = 3; // 0-based offset for 4-4
+    const a = o;
+    const b = max - o;
+    // corners
+    pts.push([a, a], [a, b], [b, a], [b, b]);
+    // sides
+    pts.push([mid, a], [mid, b], [a, mid], [b, mid]);
+    // center
+    pts.push([mid, mid]);
+    return pts;
+  }
+
+  if (size === 13) {
+    const o = 3; // 0-based offset for 4-4
+    const a = o;
+    const b = max - o;
+    // corners
+    pts.push([a, a], [a, b], [b, a], [b, b]);
+    // center only (no side stars)
+    pts.push([mid, mid]);
+    return pts;
+  }
+
+  if (size === 9) {
+    const o = 2; // 0-based offset for 3-3
+    const a = o;
+    const b = max - o;
+    // corners
+    pts.push([a, a], [a, b], [b, a], [b, b]);
+    // center
+    pts.push([mid, mid]);
+    return pts;
+  }
+
+  // fallback: just center for other odd sizes
+  if (size % 2 === 1) pts.push([mid, mid]);
+  return pts;
+}
+
 /* ------------------------------------------------------------------ */
 /* Component                                                           */
 /* ------------------------------------------------------------------ */
@@ -92,6 +145,7 @@ export default function GobanBoard({
   const colLabels = useMemo(() => getColumnLabels(BOARD_SIZE), [BOARD_SIZE]);
 
   const chainLib = useChainLiberties(board);
+  const starPoints = useMemo(() => getStarPoints(BOARD_SIZE), [BOARD_SIZE]);
 
   return (
     <svg
@@ -165,6 +219,18 @@ export default function GobanBoard({
           </React.Fragment>
         );
       })}
+
+      {/* ---------------- punti stella (hoshi) ---------------- */}
+      {starPoints.map(([r, c], idx) => (
+        <circle
+          key={`hoshi-${idx}`}
+          cx={MARGIN + c * CELL_SIZE}
+          cy={MARGIN + r * CELL_SIZE}
+          r={4}
+          fill="black"
+          pointerEvents="none"
+        />
+      ))}
 
       {/* ---------------- hit‑areas ---------------- */}
       {board.map((row, r) =>
