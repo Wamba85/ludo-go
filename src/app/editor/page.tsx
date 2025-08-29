@@ -44,7 +44,6 @@ function nextLetterRank(arr: Label[]): number {
   return max;
 }
 
-type Mode = 'empty' | 'fromSgf';
 type Tool =
   | 'play'
   | 'setupB'
@@ -57,7 +56,6 @@ type Tool =
   | 'labelLET';
 
 export default function SgfEditorPage() {
-  const [mode, setMode] = useState<Mode>('empty');
   const [boardSize, setBoardSize] = useState<number>(19);
   const [sgfText, setSgfText] = useState<string>('');
   const [rev, setRev] = useState(0); // per rimontare Goban quando cambia sorgente
@@ -75,7 +73,6 @@ export default function SgfEditorPage() {
   }, [boardSize]);
 
   const createEmpty = useCallback(() => {
-    setMode('empty');
     setSgfText('');
     setSetup({ size: boardSize, stones: [], toPlay: 1 });
     setLabels([]);
@@ -130,7 +127,6 @@ export default function SgfEditorPage() {
         setLabels([...shapes, ...lbVals]);
       } catch {}
       setSgfText(txt);
-      setMode('fromSgf');
       setRev((r) => r + 1);
       // reset input
       e.currentTarget.value = '';
@@ -180,7 +176,6 @@ export default function SgfEditorPage() {
       });
       setLabels([...shapes, ...lbVals]);
     } catch {}
-    setMode('fromSgf');
     setRev((r) => r + 1);
   }, [sgfText, boardSize]);
 
@@ -343,12 +338,12 @@ export default function SgfEditorPage() {
   );
 
   return (
-    <div className="flex flex-col items-center px-6 py-8 min-h-screen">
+    <div className="flex flex-col px-6 py-8 min-h-screen">
       {header}
 
-      <div className="grid w-full max-w-5xl grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid w-full grid-cols-1 lg:grid-cols-[minmax(300px,360px)_1fr] gap-6">
         {/* Pannello controlli */}
-        <Card className="rounded-2xl shadow-md lg:col-span-1">
+        <Card className="rounded-2xl shadow-md">
           <CardHeader>
             <CardTitle className="text-lg">Sorgente</CardTitle>
           </CardHeader>
@@ -356,7 +351,7 @@ export default function SgfEditorPage() {
             {/* Strumenti */}
             <div>
               <label className="block text-sm mb-1">Strumenti</label>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   variant={tool === 'play' ? 'default' : 'secondary'}
                   onClick={() => setTool('play')}
@@ -482,27 +477,18 @@ export default function SgfEditorPage() {
         </Card>
 
         {/* Area editor Goban */}
-        <Card className="rounded-2xl shadow-md lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-lg">
-              {mode === 'empty'
-                ? `Goban vuoto ${boardSize}x${boardSize}`
-                : 'SGF caricato'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-5">
-              <Goban
-                key={rev}
-                sgfMoves={sgfText}
-                BOARD_SIZE={boardSize}
-                showMoveTree={true}
-                exerciseOptions={{ setup }}
-                onBoardClick={onBoardClick}
-                labels={labels}
-                onMetaChange={onMetaChange}
-              />
-            </div>
+        <Card className="rounded-2xl shadow-md">
+          <CardContent className="p-4">
+            <Goban
+              key={`${rev}-${boardSize}`}
+              sgfMoves={sgfText}
+              BOARD_SIZE={boardSize}
+              showMoveTree={true}
+              exerciseOptions={{ setup }}
+              onBoardClick={onBoardClick}
+              labels={labels}
+              onMetaChange={onMetaChange}
+            />
           </CardContent>
         </Card>
       </div>

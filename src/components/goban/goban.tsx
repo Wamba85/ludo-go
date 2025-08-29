@@ -136,67 +136,75 @@ export default function Goban({
   }, [state.meta]);
 
   return (
-    <div className="flex gap-5">
-      <div>
-        <Toolbar
-          {...state} /* nav functions + prisoners */
-          playerTurn={state.currentNode.player === 1 ? 'Bianco' : 'Nero'}
-          disableBack={disableBack}
-          disableForward={disableForward}
-          showLiberties={showLiberties}
-          setShowLiberties={setShowLiberties}
-          showCoordinates={showCoordinates}
-          setShowCoordinates={setShowCoordinates}
-          onOpenSgf={handleOpenSgf} /* ← nuovo */
-          onExportSgf={handleExportSgf}
-        />
+    <div className="flex flex-col gap-4">
+      {/* Header toolbar */}
+      <Toolbar
+        {...state}
+        playerTurn={state.currentNode.player === 1 ? 'Bianco' : 'Nero'}
+        disableBack={disableBack}
+        disableForward={disableForward}
+        showLiberties={showLiberties}
+        setShowLiberties={setShowLiberties}
+        showCoordinates={showCoordinates}
+        setShowCoordinates={setShowCoordinates}
+        onOpenSgf={handleOpenSgf}
+        onExportSgf={handleExportSgf}
+      />
 
-        <GobanBoard
-          board={state.board}
-          currentNode={state.currentNode}
-          root={state.root}
-          koPoint={state.koPoint}
-          showLiberties={showLiberties}
-          showCoordinates={showCoordinates}
-          onIntersectionClick={(r, c) => {
-            if (onBoardClick && onBoardClick(r, c)) return;
-            state.handleIntersectionClick(r, c);
-          }}
-          labels={labels}
-        />
-      </div>
-
-      {/* Right column: comment panel + move tree */}
-      <div className="flex flex-col gap-3" style={{ width: 'clamp(260px,28vw,340px)' }}>
-        <Card className="rounded-xl shadow-md">
-          <CardContent className="p-3">
-            <label className="block text-sm mb-1">Commento posizione</label>
-            <textarea
-              className="w-full rounded border px-2 py-1 text-sm font-mono"
-              placeholder={
-                state.currentNode === state.root
-                  ? 'Nessun commento (posizione iniziale)'
-                  : 'Scrivi un commento per questa posizione'
-              }
-              value={state.currentNode.comment ?? ''}
-              onChange={(e) => state.setCurrentComment(e.target.value)}
-            />
-          </CardContent>
-        </Card>
-
-        {showMoveTree && !isTreeTooLarge && (
-          <MoveTree
-            key={state.treeRev}
-            root={state.root}
+      {/* Body: board left, side column right (stacks on small screens) */}
+      <div className="flex flex-col md:flex-row gap-4 items-start">
+        <div className="flex-1 min-w-0">
+          <GobanBoard
+            board={state.board}
             currentNode={state.currentNode}
-            setCurrentNode={state.setCurrentNode}
+            root={state.root}
+            koPoint={state.koPoint}
+            showLiberties={showLiberties}
+            showCoordinates={showCoordinates}
+            onIntersectionClick={(r, c) => {
+              if (onBoardClick && onBoardClick(r, c)) return;
+              state.handleIntersectionClick(r, c);
+            }}
+            labels={labels}
           />
-        )}
-        {showMoveTree && isTreeTooLarge && (
-          <div className="text-xs text-stone-500 mt-2">
-            L&apos;albero delle mosse è molto grande: nascosto per prestazioni.
-          </div>
-        )}
+        </div>
+
+        {/* Right column: comment panel + move tree */}
+        <div
+          className="flex flex-col gap-3"
+          style={{ width: 'clamp(260px,28vw,340px)' }}
+        >
+          <Card className="rounded-xl shadow-md">
+            <CardContent className="p-3">
+              <label className="block text-sm mb-1">Commento posizione</label>
+              <textarea
+                className="w-full rounded border px-2 py-1 text-sm font-mono"
+                placeholder={
+                  state.currentNode === state.root
+                    ? 'Nessun commento (posizione iniziale)'
+                    : 'Scrivi un commento per questa posizione'
+                }
+                value={state.currentNode.comment ?? ''}
+                onChange={(e) => state.setCurrentComment(e.target.value)}
+              />
+            </CardContent>
+          </Card>
+
+          {showMoveTree && !isTreeTooLarge && (
+            <MoveTree
+              key={state.treeRev}
+              root={state.root}
+              currentNode={state.currentNode}
+              setCurrentNode={state.setCurrentNode}
+            />
+          )}
+          {showMoveTree && isTreeTooLarge && (
+            <div className="text-xs text-stone-500 mt-2">
+              L&apos;albero delle mosse è molto grande: nascosto per
+              prestazioni.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
