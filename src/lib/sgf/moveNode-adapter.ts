@@ -40,6 +40,7 @@ function goToMoveTree(rootGo: GoNode): MoveNode {
       col: isPass ? -1 : go.move!.pt!.x,
       depth: uiParent.depth + 1,
       branch: branchBase,
+      comment: go.props?.C ? go.props.C.join('\n') : undefined,
     };
     uiParent.children.push(node);
 
@@ -68,10 +69,12 @@ function moveTreeToGo(root: MoveNode): GoNode {
         : { color: toColor(n.player), pt: { x: n.col, y: n.row } }
       : undefined;
 
+    const props = n.comment ? { C: [n.comment] } : undefined;
+
     return {
       id: `n${n.id}`,
       move,
-      props: undefined,
+      props,
       children: n.children.map(toGo),
     };
   };

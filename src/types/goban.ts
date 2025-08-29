@@ -25,6 +25,8 @@ export interface MoveNode {
   branch: number;
   /** horizontal index (colonna) = moveNumber ‑ 1 */
   depth: number;
+  /** optional comment attached to this position */
+  comment?: string;
 }
 
 /** Simple helper for prisoner counters */

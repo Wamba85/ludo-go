@@ -184,6 +184,15 @@ export function useGobanState(
   };
 
   /* --------------------------------------------------------------------- */
+  /* 3b. Commento per posizione                                             */
+  /* --------------------------------------------------------------------- */
+  const setCurrentComment = (text: string) => {
+    // Salva sul nodo corrente e forza un re-render dell'albero
+    currentNode.comment = text || undefined;
+    setTreeRev((r) => r + 1);
+  };
+
+  /* --------------------------------------------------------------------- */
   /* 4. Ricostruzione completa del goban quando cambia currentNode         */
   /* --------------------------------------------------------------------- */
   useEffect(() => {
@@ -308,6 +317,7 @@ export function useGobanState(
     currentNode,
     root,
     handleIntersectionClick,
+    setCurrentComment,
     toStart,
     back,
     forward,

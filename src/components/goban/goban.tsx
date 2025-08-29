@@ -8,7 +8,7 @@
  */
 
 'use client';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import GobanBoard from './goban-board';
 import MoveTree from './move-tree';
 import Toolbar from './toolbar';
@@ -17,7 +17,8 @@ import type { Label } from '@/types/goban';
 import { exportMoveTreeToSgf, defaultMeta } from '@/lib/sgf/moveNode-adapter';
 import type { GoMeta, Coord } from '@/lib/sgf/go-semantic';
 import { coordToSgf } from '@/lib/sgf/go-semantic';
-import { useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+// (useEffect already imported above)
 
 interface GobanProps {
   sgfMoves: string;
@@ -125,9 +126,14 @@ export default function Goban({
   const disableForward = state.currentNode.children.length === 0;
 
   // Propagate meta changes to parent (e.g., when opening SGF from toolbar)
+  // Use a ref to avoid firing the effect when the callback identity changes.
+  const onMetaChangeRef = useRef<typeof onMetaChange>();
   useEffect(() => {
-    onMetaChange?.(state.meta);
-  }, [onMetaChange, state.meta]);
+    onMetaChangeRef.current = onMetaChange;
+  }, [onMetaChange]);
+  useEffect(() => {
+    onMetaChangeRef.current?.(state.meta);
+  }, [state.meta]);
 
   return (
     <div className="flex gap-5">
@@ -160,19 +166,38 @@ export default function Goban({
         />
       </div>
 
-      {showMoveTree && !isTreeTooLarge && (
-        <MoveTree
-          key={state.treeRev}
-          root={state.root}
-          currentNode={state.currentNode}
-          setCurrentNode={state.setCurrentNode}
-        />
-      )}
-      {showMoveTree && isTreeTooLarge && (
-        <div className="text-xs text-stone-500 mt-2">
-          L&apos;albero delle mosse è molto grande: nascosto per prestazioni.
-        </div>
-      )}
+      {/* Right column: comment panel + move tree */}
+      <div className="flex flex-col gap-3" style={{ width: 'clamp(260px,28vw,340px)' }}>
+        <Card className="rounded-xl shadow-md">
+          <CardContent className="p-3">
+            <label className="block text-sm mb-1">Commento posizione</label>
+            <textarea
+              className="w-full rounded border px-2 py-1 text-sm font-mono"
+              placeholder={
+                state.currentNode === state.root
+                  ? 'Nessun commento (posizione iniziale)'
+                  : 'Scrivi un commento per questa posizione'
+              }
+              value={state.currentNode.comment ?? ''}
+              onChange={(e) => state.setCurrentComment(e.target.value)}
+            />
+          </CardContent>
+        </Card>
+
+        {showMoveTree && !isTreeTooLarge && (
+          <MoveTree
+            key={state.treeRev}
+            root={state.root}
+            currentNode={state.currentNode}
+            setCurrentNode={state.setCurrentNode}
+          />
+        )}
+        {showMoveTree && isTreeTooLarge && (
+          <div className="text-xs text-stone-500 mt-2">
+            L&apos;albero delle mosse è molto grande: nascosto per prestazioni.
+          </div>
+        )}
+      </div>
     </div>
   );
 }
