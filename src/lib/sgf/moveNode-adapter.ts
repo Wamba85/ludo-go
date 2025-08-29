@@ -90,12 +90,28 @@ function moveTreeToGo(root: MoveNode): GoNode {
 export function loadSgfToMoveTree(s: string) {
   const col = parseSgf(s);
   const { meta, root } = astToGo(col.trees[0]);
-  return { meta, root: goToMoveTree(root) };
+  const uiRoot = goToMoveTree(root);
+  // Root-level comment: SGF allows C[...] on the root node.
+  // We map it to the UI root MoveNode.comment for round-trip editing.
+  if (meta.extras?.C && meta.extras.C.length) {
+    uiRoot.comment = meta.extras.C.join('\n');
+    // Remove from extras so we don't duplicate when exporting later.
+    const { C, ...rest } = meta.extras;
+    meta.extras = rest;
+  }
+  return { meta, root: uiRoot };
 }
 
 export function exportMoveTreeToSgf(meta: GoMeta, root: MoveNode) {
   const goRoot = moveTreeToGo(root);
-  const ast = goToAst(meta, goRoot);
+  // Inject root comment (if any) into root props as C[...] via meta.extras
+  const metaExtras = { ...(meta.extras ?? {}) } as Record<string, string[]>;
+  if (root.comment && root.comment.trim()) {
+    const lines = [root.comment];
+    metaExtras.C = lines; // overwrite or set; root comment is single string
+  }
+  const metaWithRootC: GoMeta = { ...meta, extras: metaExtras };
+  const ast = goToAst(metaWithRootC, goRoot);
   return stringifyTree(ast);
 }
 
