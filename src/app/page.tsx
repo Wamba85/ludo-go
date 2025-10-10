@@ -26,7 +26,7 @@ export default function Dashboard() {
   // Placeholder percorso (6 lezioni + riepilogo)
   const pathLevels = useMemo(
     () => [
-      { id: 1, name: 'Cattura base' },
+      { id: 1, name: 'Cattura base', href: '/module/rules/exercises' },
       { id: 2, name: 'Salvataggio gruppi' },
       { id: 3, name: 'Libertà & Atari' },
       { id: 4, name: 'Ko e regole speciali' },
@@ -149,29 +149,51 @@ export default function Dashboard() {
         </header>
 
         <ol className="relative flex flex-col gap-10 pl-6 before:absolute before:left-[14px] before:top-1 before:h-[95%] before:w-[2px] before:bg-amber-300 dark:before:bg-amber-500">
-          {pathLevels.map((level) => (
-            <li key={level.id} className="relative flex items-center gap-4">
-              {/* Nodo cerchio */}
-              <span
-                className={`absolute -left-6 top-1/2 -translate-y-1/2 inline-flex size-8 items-center justify-center rounded-full text-sm font-bold text-white ${
-                  level.isReview ? 'bg-cyan-500' : 'bg-amber-400'
-                }`}
-              >
-                {level.id}
-              </span>
+          {pathLevels.map((level) => {
+            const clickable = Boolean(level.href);
+            const colorClass = level.isReview ? 'bg-cyan-500' : 'bg-amber-400';
+            const circleClasses = [
+              'inline-flex size-8 items-center justify-center rounded-full text-sm font-bold text-white transition',
+              colorClass,
+              clickable
+                ? 'cursor-pointer border-2 border-white/80 dark:border-stone-950/60 ring-4 ring-amber-300/60 ring-offset-2 ring-offset-white/80 hover:scale-[1.08]'
+                : '',
+            ]
+              .filter(Boolean)
+              .join(' ');
+            const circleContent = (
+              <span className={circleClasses}>{level.id}</span>
+            );
 
-              {/* Titolo */}
-              <span
-                className={`text-lg font-medium mx-6 ${
-                  level.isReview
-                    ? 'italic text-cyan-600 dark:text-cyan-400'
-                    : ''
-                }`}
-              >
-                {level.name}
-              </span>
-            </li>
-          ))}
+            return (
+              <li key={level.id} className="relative flex items-center gap-4">
+                {clickable ? (
+                  <Link
+                    href={level.href!}
+                    className="absolute -left-6 top-1/2 inline-flex -translate-y-1/2 rounded-full focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-white/80 dark:focus-visible:ring-offset-stone-900"
+                    aria-label={`Apri ${level.name}`}
+                  >
+                    {circleContent}
+                  </Link>
+                ) : (
+                  <span className="absolute -left-6 top-1/2 -translate-y-1/2">
+                    {circleContent}
+                  </span>
+                )}
+
+                {/* Titolo */}
+                <span
+                  className={`mx-6 text-lg font-medium ${
+                    level.isReview
+                      ? 'italic text-cyan-600 dark:text-cyan-400'
+                      : ''
+                  }`}
+                >
+                  {level.name}
+                </span>
+              </li>
+            );
+          })}
         </ol>
       </section>
       <SgfUploader />
