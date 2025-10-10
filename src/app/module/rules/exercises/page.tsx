@@ -1,19 +1,37 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import Goban from '@/components/goban/goban';
 
-const exercises = Array.from({ length: 10 }, (_, idx) => ({
+const libertyExercises = [
+  { answer: 4, choices: [5, 4, 8, 3] },
+  { answer: 6, choices: [8, 4, 6, 10] },
+  { answer: 3, choices: [3, 2, 4, 5] },
+  { answer: 7, choices: [8, 7, 6, 9] },
+  { answer: 2, choices: [4, 3, 1, 2] },
+  { answer: 13, choices: [15, 13, 11, 17] },
+  { answer: 8, choices: [8, 10, 12, 6] },
+  { answer: 10, choices: [8, 12, 14, 10] },
+  { answer: 5, choices: [3, 6, 5, 4] },
+  { answer: 18, choices: [22, 18, 16, 20] },
+];
+
+const exercises = libertyExercises.map((item, idx) => ({
   id: idx + 1,
   title: `Esercizio ${idx + 1}`,
-  description:
-    'Placeholder interattivo. Qui verrà inserita la logica reale dell’esercizio.',
+  question: 'Quante libertà ha questa catena di pietre?',
+  description: 'Osserva la configurazione e scegli il numero corretto.',
+  sgfPath: `/sgf/01_01_01_${String(idx + 1).padStart(2, '0')}.sgf`,
+  ...item,
 }));
 
 export default function RulesExercisesPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [completed, setCompleted] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
 
   const currentExercise = exercises[currentIndex];
   const completedCount = completed ? exercises.length : currentIndex;
@@ -21,6 +39,17 @@ export default function RulesExercisesPage() {
     () => Math.round((completedCount / exercises.length) * 100),
     [completedCount],
   );
+
+  useEffect(() => {
+    setSelectedOption(null);
+    setIsAnswerCorrect(null);
+  }, [currentIndex]);
+
+  const handleOptionSelect = (value: number) => {
+    if (completed || isAnswerCorrect === true) return;
+    setSelectedOption(value);
+    setIsAnswerCorrect(value === currentExercise.answer);
+  };
 
   const handleComplete = () => {
     if (currentIndex === exercises.length - 1) {
@@ -33,6 +62,8 @@ export default function RulesExercisesPage() {
   const handleRestart = () => {
     setCurrentIndex(0);
     setCompleted(false);
+    setSelectedOption(null);
+    setIsAnswerCorrect(null);
   };
 
   return (
@@ -81,17 +112,87 @@ export default function RulesExercisesPage() {
 
           {!completed ? (
             <div className="space-y-6">
-              <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50/40 p-6 text-center dark:border-amber-300/50 dark:bg-amber-900/10">
-                <h2 className="text-xl font-medium">{currentExercise.title}</h2>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {currentExercise.description}
-                </p>
-                <button
-                  onClick={handleComplete}
-                  className="mt-4 inline-flex items-center justify-center rounded-full bg-amber-400 px-5 py-2 text-sm font-medium text-white shadow transition hover:scale-[1.02]"
-                >
-                  Completa esercizio
-                </button>
+              <div className="space-y-4 rounded-2xl border border-dashed border-amber-200 bg-amber-50/40 p-6 dark:border-amber-300/50 dark:bg-amber-900/10">
+                <header className="text-center">
+                  <h2 className="text-xl font-medium">
+                    {currentExercise.title}
+                  </h2>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {currentExercise.description}
+                  </p>
+                  <p className="mt-4 text-base font-medium text-foreground">
+                    {currentExercise.question}
+                  </p>
+                </header>
+                <div className="flex justify-center">
+                  <Goban
+                    sgfMoves=""
+                    BOARD_SIZE={9}
+                    showMoveTree={false}
+                    boardOnly
+                    preloadSgfUrl={currentExercise.sgfPath}
+                  />
+                </div>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    {currentExercise.choices.map((value) => {
+                      const isSelected = selectedOption === value;
+                      const isCorrectValue = value === currentExercise.answer;
+                      const baseClass =
+                        'rounded-full border px-5 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400';
+                      const className =
+                        isAnswerCorrect === true && isCorrectValue
+                          ? `${baseClass} border-emerald-500 bg-emerald-500 text-white shadow`
+                          : isAnswerCorrect === true
+                            ? `${baseClass} border-stone-200 bg-card/60 text-foreground/70 dark:border-stone-700 dark:bg-stone-900/60 dark:text-stone-300`
+                            : isAnswerCorrect === false && isSelected
+                              ? `${baseClass} border-rose-500 bg-rose-500 text-white shadow`
+                              : isSelected
+                                ? `${baseClass} border-amber-400 bg-amber-50 text-amber-700 shadow-sm dark:bg-amber-900/20 dark:text-amber-200`
+                                : `${baseClass} border-stone-200 bg-card/80 text-foreground transition hover:border-amber-400 hover:shadow-sm dark:border-stone-700 dark:bg-stone-900/60`;
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => handleOptionSelect(value)}
+                          className={className}
+                          disabled={isAnswerCorrect === true}
+                        >
+                          {value}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {isAnswerCorrect === true && (
+                    <p className="text-center text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                      Corretto! Questa catena ha {currentExercise.answer}{' '}
+                      libertà.
+                    </p>
+                  )}
+                  {isAnswerCorrect === false && selectedOption !== null && (
+                    <p className="text-center text-sm font-medium text-rose-600 dark:text-rose-400">
+                      Non è corretto, conta di nuovo le libertà disponibili.
+                    </p>
+                  )}
+                </div>
+                <div className="text-center">
+                  {isAnswerCorrect === true ? (
+                    <button
+                      onClick={handleComplete}
+                      className="inline-flex items-center justify-center rounded-full bg-amber-400 px-5 py-2 text-sm font-medium text-white shadow transition hover:scale-[1.02]"
+                    >
+                      {currentIndex === exercises.length - 1
+                        ? 'Completa il percorso'
+                        : 'Prossimo esercizio'}
+                    </button>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      {selectedOption === null
+                        ? 'Seleziona una risposta per continuare.'
+                        : 'Riprova: serve la risposta corretta per passare al prossimo esercizio.'}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           ) : (

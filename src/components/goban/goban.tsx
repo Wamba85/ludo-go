@@ -34,6 +34,10 @@ interface GobanProps {
   labels?: Label[];
   /** Notify parent when parsed meta changes (useful to import labels/setup) */
   onMetaChange?: (meta: GoMeta) => void;
+  /** Visualizza solo la board, senza toolbar né colonna destra */
+  boardOnly?: boolean;
+  /** SGF remoto da caricare automaticamente alla prima render */
+  preloadSgfUrl?: string;
 }
 
 export default function Goban({
@@ -44,6 +48,8 @@ export default function Goban({
   onBoardClick,
   labels,
   onMetaChange,
+  boardOnly = false,
+  preloadSgfUrl,
 }: GobanProps) {
   const [sgfText, setSgfText] = useState(sgfMoves); // ← nuovo stato locale
   const state = useGobanState(sgfText, BOARD_SIZE, exerciseOptions); // ← usa sgfText
@@ -63,9 +69,13 @@ export default function Goban({
   }, [state.root]);
 
   // ↓↓↓ AGGIUNTA: due azioni SGF
+  const applySgfText = (text: string) => {
+    setSgfText((prev) => (prev === text ? prev : text));
+  };
+
   const handleOpenSgf = async (f: File) => {
     const text = await f.text();
-    setSgfText(text); // ← niente replaceTree
+    applySgfText(text); // ← niente replaceTree
   };
 
   const handleExportSgf = () => {
@@ -135,6 +145,36 @@ export default function Goban({
     onMetaChangeRef.current?.(state.meta);
   }, [state.meta]);
 
+  // Aggiorna SGF se la prop sgfMoves cambia
+  useEffect(() => {
+    applySgfText(sgfMoves);
+  }, [sgfMoves]);
+
+  // Pre-carica SGF remoto se richiesto
+  useEffect(() => {
+    if (!preloadSgfUrl) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await fetch(preloadSgfUrl);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const text = await res.text();
+        if (!cancelled) applySgfText(text);
+      } catch (err) {
+        console.error(
+          `[Goban] Impossibile caricare SGF da ${preloadSgfUrl}`,
+          err,
+        );
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [preloadSgfUrl]);
+
   // Limit board size so it always fits the viewport height
   const boardBoxRef = useRef<HTMLDivElement>(null);
   const [maxBoardWidth, setMaxBoardWidth] = useState<number | undefined>(
@@ -160,83 +200,102 @@ export default function Goban({
     };
   }, []);
 
+  const rightColumnVisible = !boardOnly;
+
+  const boardContainer = (
+    <div
+      className={boardOnly ? 'w-full max-w-3xl' : 'flex-1 min-w-0'}
+      ref={boardBoxRef}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: maxBoardWidth ? `${maxBoardWidth}px` : undefined,
+        }}
+      >
+        <GobanBoard
+          board={state.board}
+          currentNode={state.currentNode}
+          root={state.root}
+          koPoint={state.koPoint}
+          showLiberties={showLiberties}
+          showCoordinates={showCoordinates}
+          onIntersectionClick={(r, c) => {
+            if (onBoardClick && onBoardClick(r, c)) return;
+            state.handleIntersectionClick(r, c);
+          }}
+          labels={labels}
+        />
+      </div>
+    </div>
+  );
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className={`flex ${boardOnly ? 'justify-center' : 'flex-col gap-4'}`}>
       {/* Header toolbar */}
-      <Toolbar
-        {...state}
-        playerTurn={state.currentNode.player === 1 ? 'Bianco' : 'Nero'}
-        disableBack={disableBack}
-        disableForward={disableForward}
-        showLiberties={showLiberties}
-        setShowLiberties={setShowLiberties}
-        showCoordinates={showCoordinates}
-        setShowCoordinates={setShowCoordinates}
-        onOpenSgf={handleOpenSgf}
-        onExportSgf={handleExportSgf}
-      />
+      {!boardOnly && (
+        <Toolbar
+          {...state}
+          playerTurn={state.currentNode.player === 1 ? 'Bianco' : 'Nero'}
+          disableBack={disableBack}
+          disableForward={disableForward}
+          showLiberties={showLiberties}
+          setShowLiberties={setShowLiberties}
+          showCoordinates={showCoordinates}
+          setShowCoordinates={setShowCoordinates}
+          onOpenSgf={handleOpenSgf}
+          onExportSgf={handleExportSgf}
+        />
+      )}
 
       {/* Body: board left, side column right (stacks on small screens) */}
-      <div className="flex flex-col md:flex-row gap-4 items-start">
-        <div className="flex-1 min-w-0" ref={boardBoxRef}>
-          <div
-            style={{
-              width: '100%',
-              maxWidth: maxBoardWidth ? `${maxBoardWidth}px` : undefined,
-            }}
-          >
-            <GobanBoard
-              board={state.board}
-              currentNode={state.currentNode}
-              root={state.root}
-              koPoint={state.koPoint}
-              showLiberties={showLiberties}
-              showCoordinates={showCoordinates}
-              onIntersectionClick={(r, c) => {
-                if (onBoardClick && onBoardClick(r, c)) return;
-                state.handleIntersectionClick(r, c);
-              }}
-              labels={labels}
-            />
-          </div>
-        </div>
+      <div
+        className={
+          boardOnly
+            ? 'flex w-full justify-center'
+            : 'flex flex-col md:flex-row gap-4 items-start'
+        }
+      >
+        {boardContainer}
 
         {/* Right column: comment panel + move tree */}
-        <div
-          className="flex flex-col gap-3"
-          style={{ width: 'clamp(260px,28vw,340px)' }}
-        >
-          <Card className="rounded-xl shadow-md">
-            <CardContent className="p-3">
-              <label className="block text-sm mb-1">Commento posizione</label>
-              <textarea
-                className="w-full rounded border px-2 py-1 text-sm font-mono"
-                placeholder={
-                  state.currentNode === state.root
-                    ? 'Nessun commento (posizione iniziale)'
-                    : 'Scrivi un commento per questa posizione'
-                }
-                value={state.currentNode.comment ?? ''}
-                onChange={(e) => state.setCurrentComment(e.target.value)}
-              />
-            </CardContent>
-          </Card>
+        {rightColumnVisible && (
+          <div
+            className="flex flex-col gap-3"
+            style={{ width: 'clamp(260px,28vw,340px)' }}
+          >
+            <Card className="rounded-xl shadow-md">
+              <CardContent className="p-3">
+                <label className="block text-sm mb-1">Commento posizione</label>
+                <textarea
+                  className="w-full rounded border px-2 py-1 text-sm font-mono"
+                  placeholder={
+                    state.currentNode === state.root
+                      ? 'Nessun commento (posizione iniziale)'
+                      : 'Scrivi un commento per questa posizione'
+                  }
+                  value={state.currentNode.comment ?? ''}
+                  onChange={(e) => state.setCurrentComment(e.target.value)}
+                />
+              </CardContent>
+            </Card>
 
-          {showMoveTree && !isTreeTooLarge && (
-            <MoveTree
-              key={state.treeRev}
-              root={state.root}
-              currentNode={state.currentNode}
-              setCurrentNode={state.setCurrentNode}
-            />
-          )}
-          {showMoveTree && isTreeTooLarge && (
-            <div className="text-xs text-stone-500 mt-2">
-              L&apos;albero delle mosse è molto grande: nascosto per
-              prestazioni.
-            </div>
-          )}
-        </div>
+            {showMoveTree && !isTreeTooLarge && (
+              <MoveTree
+                key={state.treeRev}
+                root={state.root}
+                currentNode={state.currentNode}
+                setCurrentNode={state.setCurrentNode}
+              />
+            )}
+            {showMoveTree && isTreeTooLarge && (
+              <div className="text-xs text-stone-500 mt-2">
+                L&apos;albero delle mosse è molto grande: nascosto per
+                prestazioni.
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
