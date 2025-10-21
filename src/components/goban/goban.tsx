@@ -8,12 +8,18 @@
  */
 
 'use client';
-import React, { useMemo, useRef, useState, useEffect } from 'react';
+import React, {
+  useMemo,
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+} from 'react';
 import GobanBoard from './goban-board';
 import MoveTree from './move-tree';
 import Toolbar from './toolbar';
 import { AfterPlayCtx, Setup, useGobanState } from '@/hooks/use-goban-state';
-import type { Label } from '@/types/goban';
+import type { Label, MoveNode } from '@/types/goban';
 import { exportMoveTreeToSgf, defaultMeta } from '@/lib/sgf/moveNode-adapter';
 import type { GoMeta, Coord } from '@/lib/sgf/go-semantic';
 import { coordToSgf } from '@/lib/sgf/go-semantic';
@@ -38,6 +44,17 @@ interface GobanProps {
   boardOnly?: boolean;
   /** SGF remoto da caricare automaticamente alla prima render */
   preloadSgfUrl?: string;
+  /** Sequenza guidata: valida le mosse utente e gioca automaticamente l'avversario */
+  guidedSequence?: {
+    autoPlayOpponent?: boolean;
+    userColor?: 1 | 2;
+    onWrongMove?: (info: {
+      expected: { row: number; col: number; player: 1 | 2 };
+      played: { row: number; col: number; player: 1 | 2 };
+    }) => void;
+    onAdvanceStep?: (playedMoves: number, totalMoves: number) => void;
+    onComplete?: () => void;
+  };
 }
 
 export default function Goban({
@@ -50,6 +67,7 @@ export default function Goban({
   onMetaChange,
   boardOnly = false,
   preloadSgfUrl,
+  guidedSequence,
 }: GobanProps) {
   const [sgfText, setSgfText] = useState(sgfMoves); // ← nuovo stato locale
   const state = useGobanState(sgfText, BOARD_SIZE, exerciseOptions); // ← usa sgfText
@@ -202,6 +220,182 @@ export default function Goban({
 
   const rightColumnVisible = !boardOnly;
 
+  type SequenceStep = { node: MoveNode };
+  const sequenceSteps = useMemo<SequenceStep[]>(() => {
+    if (!guidedSequence) return [];
+    const moves: SequenceStep[] = [];
+    let node = state.root.children[0];
+    while (node) {
+      if (
+        node.row >= 0 &&
+        node.col >= 0 &&
+        (node.player === 1 || node.player === 2)
+      ) {
+        moves.push({ node });
+      }
+      node = node.children[0];
+    }
+    return moves;
+  }, [guidedSequence, state.root]);
+
+  const [, forceSequenceCursorUpdate] = useState(0);
+  const sequenceCursorRef = useRef(0);
+  const bumpCursorIfChanged = useCallback(
+    (value: number) => {
+      if (sequenceCursorRef.current !== value) {
+        sequenceCursorRef.current = value;
+        forceSequenceCursorUpdate((prev) => prev + 1);
+      }
+    },
+    [forceSequenceCursorUpdate],
+  );
+  const [sequenceUserColor, setSequenceUserColor] = useState<1 | 2 | null>(
+    null,
+  );
+  const sequenceUserColorRef = useRef<1 | 2 | null>(null);
+
+  useEffect(() => {
+    if (!guidedSequence) {
+      bumpCursorIfChanged(0);
+      setSequenceUserColor(null);
+      sequenceUserColorRef.current = null;
+      return;
+    }
+    const firstMove = sequenceSteps[0]?.node;
+    const color =
+      guidedSequence.userColor ??
+      (firstMove && (firstMove.player === 1 || firstMove.player === 2)
+        ? firstMove.player
+        : 1);
+    bumpCursorIfChanged(0);
+    setSequenceUserColor(color);
+    sequenceUserColorRef.current = color;
+  }, [guidedSequence, sequenceSteps, bumpCursorIfChanged]);
+
+  useEffect(() => {
+    if (!guidedSequence) return;
+    if (sequenceSteps.length === 0) {
+      bumpCursorIfChanged(0);
+      return;
+    }
+    if (state.currentNode === state.root) {
+      bumpCursorIfChanged(0);
+      return;
+    }
+    const idx = sequenceSteps.findIndex(
+      (step) => step.node === state.currentNode,
+    );
+    if (idx >= 0) {
+      bumpCursorIfChanged(idx + 1);
+    }
+  }, [
+    guidedSequence,
+    sequenceSteps,
+    state.currentNode,
+    state.root,
+    bumpCursorIfChanged,
+  ]);
+
+  const handleGuidedSequenceMove = (row: number, col: number) => {
+    if (!guidedSequence) return false;
+    const userColorRaw =
+      sequenceUserColorRef.current ??
+      sequenceUserColor ??
+      guidedSequence.userColor ??
+      sequenceSteps[0]?.node.player ??
+      1;
+    const userColor: 1 | 2 = userColorRaw === 2 ? 2 : 1;
+    if (!userColor || sequenceSteps.length === 0) return false;
+
+    let nextCursor = sequenceCursorRef.current;
+    const totalSteps = sequenceSteps.length;
+
+    const advanceToNode = (node: MoveNode) => {
+      state.setCurrentNode(node);
+    };
+
+    const autoPlayOpponent = () => {
+      if (!guidedSequence.autoPlayOpponent) return false;
+      let advanced = false;
+      while (
+        nextCursor < totalSteps &&
+        sequenceSteps[nextCursor].node.player !== userColor
+      ) {
+        const node = sequenceSteps[nextCursor].node;
+        advanceToNode(node);
+        nextCursor++;
+        guidedSequence.onAdvanceStep?.(nextCursor, totalSteps);
+        advanced = true;
+      }
+      if (advanced) {
+        bumpCursorIfChanged(nextCursor);
+        if (nextCursor >= totalSteps) {
+          guidedSequence.onComplete?.();
+        }
+      }
+      return advanced;
+    };
+
+    const autoPlayedBefore = autoPlayOpponent();
+
+    if (nextCursor >= totalSteps) {
+      return true;
+    }
+
+    if (
+      autoPlayedBefore &&
+      sequenceSteps[nextCursor]?.node.player !== userColor
+    ) {
+      return true;
+    }
+
+    const step = sequenceSteps[nextCursor];
+    if (!step) {
+      guidedSequence.onComplete?.();
+      return true;
+    }
+    const expectedNode = step.node;
+
+    if (
+      expectedNode.player !== userColor ||
+      expectedNode.row !== row ||
+      expectedNode.col !== col
+    ) {
+      guidedSequence.onWrongMove?.({
+        expected: {
+          row: expectedNode.row,
+          col: expectedNode.col,
+          player: expectedNode.player,
+        },
+        played: { row, col, player: userColor },
+      });
+      return true;
+    }
+
+    advanceToNode(expectedNode);
+    nextCursor++;
+    guidedSequence.onAdvanceStep?.(nextCursor, totalSteps);
+
+    autoPlayOpponent();
+
+    bumpCursorIfChanged(nextCursor);
+
+    if (nextCursor >= totalSteps) {
+      guidedSequence.onComplete?.();
+    }
+
+    return true;
+  };
+
+  const handleIntersection = (r: number, c: number) => {
+    if (onBoardClick && onBoardClick(r, c)) return;
+    if (guidedSequence) {
+      const handled = handleGuidedSequenceMove(r, c);
+      if (handled) return;
+    }
+    state.handleIntersectionClick(r, c);
+  };
+
   const boardContainer = (
     <div
       className={boardOnly ? 'w-full max-w-3xl' : 'flex-1 min-w-0'}
@@ -220,10 +414,7 @@ export default function Goban({
           koPoint={state.koPoint}
           showLiberties={showLiberties}
           showCoordinates={showCoordinates}
-          onIntersectionClick={(r, c) => {
-            if (onBoardClick && onBoardClick(r, c)) return;
-            state.handleIntersectionClick(r, c);
-          }}
+          onIntersectionClick={handleIntersection}
           labels={labels}
         />
       </div>

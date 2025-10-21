@@ -27,7 +27,7 @@ export default function Dashboard() {
   const pathLevels = useMemo(
     () => [
       { id: 1, name: 'Cattura base', href: '/module/rules/exercises' },
-      { id: 2, name: 'Salvataggio gruppi' },
+      { id: 2, name: 'Salvataggio gruppi', href: '/module/capture/exercises' },
       { id: 3, name: 'Libertà & Atari' },
       { id: 4, name: 'Ko e regole speciali' },
       { id: 5, name: 'Shape fondamentali' },
