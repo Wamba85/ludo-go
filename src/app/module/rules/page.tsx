@@ -1,5 +1,6 @@
 'use client';
 
+import { RequireAuth } from '@/components/auth/require-auth';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
@@ -493,12 +494,19 @@ export default function RulesPage() {
   };
 
   return (
-    <div className="relative min-h-[100svh] bg-gradient-to-b from-white to-amber-50 dark:from-zinc-950 dark:to-zinc-900">
+    <RequireAuth
+      fallback={
+        <div className="flex min-h-screen items-center justify-center text-sm text-stone-500">
+          Caricamento lezione...
+        </div>
+      }
+    >
+      <div className="relative min-h-[100svh] bg-gradient-to-b from-white to-amber-50 dark:from-zinc-950 dark:to-zinc-900">
       {/* Sticky header */}
       <header className="pointer-events-none sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur">
         <div className="pointer-events-auto mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
           <Link
-            href="/"
+            href="/dashboard"
             className="inline-flex items-center gap-1 rounded-lg border bg-card px-2 py-1 text-sm shadow-sm hover:shadow"
           >
             <ArrowLeft className="size-4" />
@@ -1106,6 +1114,7 @@ export default function RulesPage() {
       {/* Footer spacing */}
       <div className="h-8" />
     </div>
+    </RequireAuth>
   );
 }
 

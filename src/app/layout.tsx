@@ -2,6 +2,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
+import { Providers } from './providers';
 
 // ==========================
 // Shared fonts & metadata
@@ -32,7 +33,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-b from-white to-amber-50 dark:from-zinc-950 dark:to-zinc-900`}
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

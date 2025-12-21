@@ -3,6 +3,7 @@
 // ==================================================
 'use client';
 
+import { RequireAuth } from '@/components/auth/require-auth';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Goban from '@/components/goban/goban';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -338,8 +339,15 @@ export default function SgfEditorPage() {
   );
 
   return (
-    <div className="flex flex-col px-6 py-8 min-h-screen">
-      {header}
+    <RequireAuth
+      fallback={
+        <div className="flex min-h-screen items-center justify-center text-sm text-stone-500">
+          Caricamento editor...
+        </div>
+      }
+    >
+      <div className="flex flex-col px-6 py-8 min-h-screen">
+        {header}
 
       <div className="grid w-full grid-cols-1 lg:grid-cols-[minmax(300px,360px)_1fr] gap-6">
         {/* Pannello controlli */}
@@ -493,5 +501,6 @@ export default function SgfEditorPage() {
         </Card>
       </div>
     </div>
+    </RequireAuth>
   );
 }
