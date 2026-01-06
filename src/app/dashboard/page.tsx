@@ -44,7 +44,12 @@ export default function Dashboard() {
           status: 'done' as StepStatus,
           href: '/module/capture/exercises',
         },
-        { id: 3, title: 'Semeai', status: 'active' as StepStatus },
+        {
+          id: 3,
+          title: 'Salvataggio 1',
+          status: 'active' as StepStatus,
+          href: '/module/salvataggio-1/exercises',
+        },
         { id: 4, title: 'Finale semplice', status: 'locked' as StepStatus },
         { id: 5, title: 'Counting', status: 'locked' as StepStatus },
       ] satisfies Step[],

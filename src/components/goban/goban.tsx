@@ -55,6 +55,8 @@ interface GobanProps {
     onAdvanceStep?: (playedMoves: number, totalMoves: number) => void;
     onComplete?: () => void;
   };
+  /** Autoplay SGF: se la mossa dell'utente e' nel tree, gioca la risposta */
+  autoplay?: boolean;
 }
 
 export default function Goban({
@@ -68,6 +70,7 @@ export default function Goban({
   boardOnly = false,
   preloadSgfUrl,
   guidedSequence,
+  autoplay = false,
 }: GobanProps) {
   const [sgfText, setSgfText] = useState(sgfMoves); // ← nuovo stato locale
   const state = useGobanState(sgfText, BOARD_SIZE, exerciseOptions); // ← usa sgfText
@@ -192,6 +195,13 @@ export default function Goban({
       cancelled = true;
     };
   }, [preloadSgfUrl]);
+
+  useEffect(() => {
+    if (!autoplay) return;
+    if (!sgfText.trim() && !preloadSgfUrl) {
+      console.warn('[Goban] autoplay abilitato senza SGF caricato.');
+    }
+  }, [autoplay, sgfText, preloadSgfUrl]);
 
   // Limit board size so it always fits the viewport height
   const boardBoxRef = useRef<HTMLDivElement>(null);
@@ -387,10 +397,43 @@ export default function Goban({
     return true;
   };
 
+  const getNextPlayerForAutoplay = () => {
+    if (state.currentNode === state.root) {
+      return (
+        state.appliedSetup?.toPlay ?? state.root.children[0]?.player ?? 1
+      );
+    }
+    return state.currentNode.player === 1 ? 2 : 1;
+  };
+
+  const handleAutoplayMove = (row: number, col: number) => {
+    if (!autoplay) return false;
+    if (!sgfText.trim()) return false;
+    const nextPlayer = getNextPlayerForAutoplay();
+    const match = state.currentNode.children.find(
+      (child) =>
+        child.row === row && child.col === col && child.player === nextPlayer,
+    );
+    if (!match) return false;
+
+    let cursor = match;
+    let next = cursor.children[0];
+    while (next && next.player !== match.player) {
+      cursor = next;
+      next = cursor.children[0];
+    }
+    state.setCurrentNode(cursor);
+    return true;
+  };
+
   const handleIntersection = (r: number, c: number) => {
     if (onBoardClick && onBoardClick(r, c)) return;
     if (guidedSequence) {
       const handled = handleGuidedSequenceMove(r, c);
+      if (handled) return;
+    }
+    if (autoplay) {
+      const handled = handleAutoplayMove(r, c);
       if (handled) return;
     }
     state.handleIntersectionClick(r, c);
