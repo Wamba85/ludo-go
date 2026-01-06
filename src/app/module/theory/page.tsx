@@ -96,7 +96,7 @@ export default function TheoryPage() {
         {/* CTA */}
         <footer className="mt-12 flex flex-col items-center gap-4">
           <Link
-            href="/lesson/1"
+            href="/module/rules/exercises"
             className="inline-flex items-center gap-2 rounded-full bg-amber-400 px-6 py-3 text-lg font-semibold text-white shadow-md transition hover:scale-105 hover:shadow-lg"
           >
             <PlayCircle className="size-5" />

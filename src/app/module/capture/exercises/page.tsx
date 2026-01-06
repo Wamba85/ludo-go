@@ -247,7 +247,7 @@ export default function CaptureExercisesPage() {
         <section className="rounded-3xl border bg-card/70 p-6 shadow-sm backdrop-blur">
           <div className="mb-6">
             <h1 className="text-2xl font-semibold">
-              Percorso esercizi – Modulo 2
+              Percorso esercizi – Cattura
             </h1>
             <p className="text-sm text-muted-foreground">
               Cattura le pietre seguendo la sequenza corretta. Dopo ogni mossa

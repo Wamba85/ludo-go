@@ -19,6 +19,12 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 
 type StepStatus = 'done' | 'active' | 'locked';
+type Step = {
+  id: number;
+  title: string;
+  status: StepStatus;
+  href?: string;
+};
 
 export default function Dashboard() {
   const { logout } = useAuth();
@@ -26,12 +32,22 @@ export default function Dashboard() {
   const steps = useMemo(
     () =>
       [
-        { id: 1, title: 'Atari', status: 'done' as StepStatus },
-        { id: 2, title: 'Ko', status: 'done' as StepStatus },
+        {
+          id: 1,
+          title: 'Libertà',
+          status: 'done' as StepStatus,
+          href: '/module/rules/exercises',
+        },
+        {
+          id: 2,
+          title: 'Cattura',
+          status: 'done' as StepStatus,
+          href: '/module/capture/exercises',
+        },
         { id: 3, title: 'Semeai', status: 'active' as StepStatus },
         { id: 4, title: 'Finale semplice', status: 'locked' as StepStatus },
         { id: 5, title: 'Counting', status: 'locked' as StepStatus },
-      ] as const,
+      ] satisfies Step[],
     [],
   );
 
@@ -146,11 +162,8 @@ export default function Dashboard() {
                       ? 'bg-sky-500 shadow-sky-200'
                       : 'bg-stone-300 text-stone-600 shadow-stone-200';
                 const Icon = step.status === 'locked' ? Lock : Check;
-                return (
-                  <div
-                    key={step.id}
-                    className="relative z-10 flex w-full max-w-sm flex-col items-center gap-2"
-                  >
+                const content = (
+                  <>
                     <div
                       className={`flex size-14 items-center justify-center rounded-full text-white shadow-lg ${color}`}
                     >
@@ -162,6 +175,28 @@ export default function Dashboard() {
                     {!isLast && (
                       <div className="h-6 w-1 rounded-full bg-[#d4f0b2]" />
                     )}
+                  </>
+                );
+
+                if (step.href && step.status !== 'locked') {
+                  return (
+                    <Link
+                      key={step.id}
+                      href={step.href}
+                      aria-label={`Apri esercizi ${step.title}`}
+                      className="relative z-10 flex w-full max-w-sm flex-col items-center gap-2 transition hover:-translate-y-0.5"
+                    >
+                      {content}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <div
+                    key={step.id}
+                    className="relative z-10 flex w-full max-w-sm flex-col items-center gap-2"
+                  >
+                    {content}
                   </div>
                 );
               })}

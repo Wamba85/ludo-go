@@ -84,7 +84,9 @@ export default function RulesExercisesPage() {
 
         <section className="rounded-3xl border bg-card/70 p-6 shadow-sm backdrop-blur">
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold">Percorso esercizi</h1>
+            <h1 className="text-2xl font-semibold">
+              Percorso esercizi – Libertà
+            </h1>
             <p className="text-sm text-muted-foreground">
               Completa gli step in sequenza. Ogni placeholder verrà sostituito
               con un esercizio reale.
