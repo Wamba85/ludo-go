@@ -11,8 +11,6 @@ import {
   Home,
   UserRound,
   MoreHorizontal,
-  Flame,
-  Heart,
   Crown,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -62,18 +60,14 @@ export default function Dashboard() {
     [],
   );
 
-  const unitTitle = 'Sezione 4 · Unità 10';
-  const lessonTitle = 'Compra la cancelleria';
+  const unitTitle = 'Sezione 1 · Unità 1';
+  const lessonTitle = 'Le basi';
 
   const nav = [
     { label: 'Learn', icon: Home, href: '/dashboard', active: true },
     { label: 'Profile', icon: UserRound, href: '/profile' },
     { label: 'More', icon: MoreHorizontal, href: '/more' },
   ];
-
-  const streak = 9;
-  const hearts = 5;
-  const leagueRank = 7;
 
   return (
     <RequireAuth
@@ -128,19 +122,6 @@ export default function Dashboard() {
 
           {/* Main column */}
           <main className="flex-1">
-            {/* Top mini-stats */}
-            <div className="mb-3 flex items-center gap-3 text-sm font-semibold text-stone-700">
-              <div className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 shadow-sm shadow-emerald-100">
-                <Flame className="size-4 text-amber-500" /> {streak} streak
-              </div>
-              <div className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 shadow-sm shadow-emerald-100">
-                <Heart className="size-4 text-rose-500" /> {hearts} cuori
-              </div>
-              <div className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 shadow-sm shadow-emerald-100">
-                <Crown className="size-4 text-amber-500" /> Lega #{leagueRank}
-              </div>
-            </div>
-
             {/* Unit header */}
             <div className="mb-6 flex items-center justify-between rounded-3xl bg-[#7adf36] px-4 py-3 text-white shadow-lg shadow-emerald-200">
               <div className="flex items-center gap-3">
@@ -157,7 +138,7 @@ export default function Dashboard() {
                 className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-[#2e7c0a] shadow-md shadow-emerald-200 transition hover:translate-y-[1px]"
               >
                 <BookText className="size-4" />
-                Guidebook
+                Regole
               </Link>
             </div>
 
@@ -211,9 +192,6 @@ export default function Dashboard() {
                   </div>
                 );
               })}
-              <div className="mt-4 text-xs text-stone-400">
-                Percorso in stile Duolingo — placeholder interattivo
-              </div>
             </section>
           </main>
 
@@ -225,13 +203,11 @@ export default function Dashboard() {
                   Super GoLingo
                 </CardTitle>
                 <p className="text-sm text-stone-600">
-                  Nessuna pubblicità, pratica personalizzata, leghe leggendarie.
+                  Fase di test, pratica personalizzata, leghe leggendarie.
                 </p>
               </CardHeader>
               <CardContent>
-                <button className="w-full rounded-2xl bg-[#5f9bff] px-4 py-2 text-sm font-semibold text-white shadow-md shadow-blue-200 transition hover:translate-y-[1px]">
-                  Prova 7 giorni gratis
-                </button>
+                <p>In costruzione...</p>
               </CardContent>
             </Card>
 
@@ -258,7 +234,7 @@ export default function Dashboard() {
             <Card className="rounded-3xl shadow-md shadow-emerald-100">
               <CardHeader className="pb-1">
                 <CardTitle className="flex items-center justify-between text-sm">
-                  <span>Missioni giornaliere</span>
+                  <span>Placeholder Missioni giornaliere</span>
                   <span className="text-xs font-semibold text-amber-600">
                     Vedi tutto
                   </span>
