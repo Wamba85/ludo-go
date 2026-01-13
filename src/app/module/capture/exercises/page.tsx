@@ -244,7 +244,6 @@ export default function CaptureExercisesPage() {
   return (
     <div className="min-h-screen bg-[#f7fbff] px-4 py-10">
       <div className="mx-auto w-full max-w-3xl space-y-6">
-        <MascotIdle speechId={speechId} speechText={speechText} />
         <header className="flex items-center justify-between">
           <Link
             href="/module/rules"
@@ -290,6 +289,11 @@ export default function CaptureExercisesPage() {
               Progresso: {progressPercent}%
             </p>
           </div>
+          <MascotIdle
+            className="mb-4"
+            speechId={speechId}
+            speechText={speechText}
+          />
 
           {!completed ? (
             <div className="space-y-6">

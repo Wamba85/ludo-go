@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
 type MascotIdleProps = {
@@ -60,17 +61,20 @@ export default function MascotIdle({
   return (
     <div className={`flex justify-center ${className}`.trim()}>
       <div className="relative flex items-center">
-        <div className="flex items-center justify-center rounded-3xl border border-emerald-100 bg-white/90 px-5 py-3 shadow-sm shadow-emerald-100">
-          <img
+        <div className="flex items-center justify-center bg-white/90 px-5 py-3">
+          <Image
             src={isSpeaking ? '/Speaking.gif' : '/Idle.gif'}
             alt="Mascotte GoLingo"
+            width={96}
+            height={96}
+            sizes="96px"
             className="h-24 w-24 object-contain"
           />
         </div>
         {bubbleText ? (
-          <div className="absolute left-full top-[55%] ml-3 -translate-y-1/2">
-            <div className="relative max-w-[220px] rounded-2xl border border-emerald-100 bg-white px-4 py-2 text-sm font-medium text-stone-700 shadow-sm shadow-emerald-100">
-              <span className="absolute -left-1 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-l border-emerald-100 bg-white" />
+          <div className="absolute left-full top-[45%] ml-3 -translate-y-1/2">
+            <div className="relative max-w-[220px] rounded-2xl border border-stone-900 bg-white px-4 py-2 text-sm font-medium text-stone-700 shadow-sm shadow-emerald-100">
+              <span className="absolute -left-1 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-l border-stone-900 bg-white" />
               {bubbleText}
             </div>
           </div>
