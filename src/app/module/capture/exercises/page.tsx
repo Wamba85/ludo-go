@@ -247,7 +247,7 @@ export default function CaptureExercisesPage() {
         <section className="rounded-3xl border bg-card/70 p-6 shadow-sm backdrop-blur">
           <div className="mb-6">
             <h1 className="text-2xl font-semibold">
-              Percorso esercizi – Cattura
+              Percorso esercizi – Cattura 1
             </h1>
             <p className="text-sm text-muted-foreground">
               Cattura le pietre seguendo la sequenza corretta. Dopo ogni mossa
@@ -356,7 +356,7 @@ export default function CaptureExercisesPage() {
               <div className="inline-flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-700 shadow-sm dark:border-emerald-400/60 dark:bg-emerald-900/20 dark:text-emerald-200">
                 <CheckCircle2 className="size-5" />
                 <span>
-                  Hai completato tutti gli esercizi di cattura del modulo 2!
+                  Hai completato tutti gli esercizi di cattura 1!
                 </span>
               </div>
               <button
