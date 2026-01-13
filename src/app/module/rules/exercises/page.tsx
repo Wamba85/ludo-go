@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import Goban from '@/components/goban/goban';
+import MascotIdle from '@/components/mascot-idle';
 
 const libertyExercises = [
   { answer: 4, choices: [5, 4, 8, 3] },
@@ -69,6 +70,7 @@ export default function RulesExercisesPage() {
   return (
     <div className="min-h-screen bg-[#f7fbff] px-4 py-10">
       <div className="mx-auto w-full max-w-3xl space-y-6">
+        <MascotIdle />
         <header className="flex items-center justify-between">
           <Link
             href="/module/rules"

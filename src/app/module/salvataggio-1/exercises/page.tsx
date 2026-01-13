@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, CheckCircle2, RotateCcw } from 'lucide-react';
 import Goban from '@/components/goban/goban';
+import MascotIdle from '@/components/mascot-idle';
 import { loadSgfToMoveTree } from '@/lib/sgf/moveNode-adapter';
 import type { Label, LabelKind, MoveNode } from '@/types/goban';
 
@@ -231,6 +232,7 @@ export default function SalvataggioExercisesPage() {
   return (
     <div className="min-h-screen bg-[#f7fbff] px-4 py-10">
       <div className="mx-auto w-full max-w-3xl space-y-6">
+        <MascotIdle />
         <header className="flex items-center justify-between">
           <Link
             href="/dashboard"

@@ -453,7 +453,9 @@ export default function SgfEditorPage() {
 
                 {/* Da file SGF */}
                 <div>
-                  <label className="block text-sm mb-1">Carica da file SGF</label>
+                  <label className="block text-sm mb-1">
+                    Carica da file SGF
+                  </label>
                   <input
                     type="file"
                     accept=".sgf,text/plain"
