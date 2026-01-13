@@ -67,12 +67,12 @@ export default function RulesExercisesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background px-4 py-10">
+    <div className="min-h-screen bg-[#f7fbff] px-4 py-10">
       <div className="mx-auto w-full max-w-3xl space-y-6">
         <header className="flex items-center justify-between">
           <Link
             href="/module/rules"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
+            className="inline-flex items-center gap-2 rounded-2xl border border-emerald-100 bg-white/90 px-3 py-2 text-sm font-medium text-stone-700 shadow-sm shadow-emerald-100 transition hover:bg-white"
           >
             <ArrowLeft className="size-4" />
             Torna alle regole
@@ -82,7 +82,7 @@ export default function RulesExercisesPage() {
           </span>
         </header>
 
-        <section className="rounded-3xl border bg-card/70 p-6 shadow-sm backdrop-blur">
+        <section className="rounded-3xl border border-emerald-100 bg-white/90 p-6 shadow-lg shadow-emerald-100 backdrop-blur">
           <div className="mb-6">
             <h1 className="text-2xl font-semibold">
               Percorso esercizi – Libertà
@@ -96,14 +96,14 @@ export default function RulesExercisesPage() {
           <div className="mb-6">
             <div
               aria-label="Progresso percorso esercizi"
-              className="h-2 w-full overflow-hidden rounded-full bg-muted"
+              className="h-2 w-full overflow-hidden rounded-full bg-[#e3f7d7]"
               role="progressbar"
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={progressPercent}
             >
               <span
-                className="block h-full bg-amber-400 transition-[width]"
+                className="block h-full bg-[#7adf36] transition-[width]"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -114,7 +114,7 @@ export default function RulesExercisesPage() {
 
           {!completed ? (
             <div className="space-y-6">
-              <div className="space-y-4 rounded-2xl border border-dashed border-amber-200 bg-amber-50/40 p-6 dark:border-amber-300/50 dark:bg-amber-900/10">
+              <div className="space-y-4 rounded-2xl border border-dashed border-[#d4f0b2] bg-[#f7fdf2] p-6">
                 <header className="text-center">
                   <h2 className="text-xl font-medium">
                     {currentExercise.title}
@@ -141,17 +141,17 @@ export default function RulesExercisesPage() {
                       const isSelected = selectedOption === value;
                       const isCorrectValue = value === currentExercise.answer;
                       const baseClass =
-                        'rounded-full border px-5 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400';
+                        'rounded-full border px-5 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7adf36]';
                       const className =
                         isAnswerCorrect === true && isCorrectValue
-                          ? `${baseClass} border-emerald-500 bg-emerald-500 text-white shadow`
+                          ? `${baseClass} border-[#7adf36] bg-[#7adf36] text-white shadow`
                           : isAnswerCorrect === true
-                            ? `${baseClass} border-stone-200 bg-card/60 text-foreground/70 dark:border-stone-700 dark:bg-stone-900/60 dark:text-stone-300`
+                            ? `${baseClass} border-stone-200 bg-white/60 text-stone-400`
                             : isAnswerCorrect === false && isSelected
                               ? `${baseClass} border-rose-500 bg-rose-500 text-white shadow`
                               : isSelected
-                                ? `${baseClass} border-amber-400 bg-amber-50 text-amber-700 shadow-sm dark:bg-amber-900/20 dark:text-amber-200`
-                                : `${baseClass} border-stone-200 bg-card/80 text-foreground transition hover:border-amber-400 hover:shadow-sm dark:border-stone-700 dark:bg-stone-900/60`;
+                                ? `${baseClass} border-[#7adf36] bg-[#e3f7d7] text-[#2f8d0c] shadow-sm`
+                                : `${baseClass} border-stone-200 bg-white/90 text-stone-700 transition hover:border-[#7adf36] hover:shadow-sm`;
                       return (
                         <button
                           key={value}
@@ -166,13 +166,13 @@ export default function RulesExercisesPage() {
                     })}
                   </div>
                   {isAnswerCorrect === true && (
-                    <p className="text-center text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                    <p className="text-center text-sm font-medium text-emerald-600">
                       Corretto! Questa catena ha {currentExercise.answer}{' '}
                       libertà.
                     </p>
                   )}
                   {isAnswerCorrect === false && selectedOption !== null && (
-                    <p className="text-center text-sm font-medium text-rose-600 dark:text-rose-400">
+                    <p className="text-center text-sm font-medium text-rose-600">
                       Non è corretto, conta di nuovo le libertà disponibili.
                     </p>
                   )}
@@ -181,7 +181,7 @@ export default function RulesExercisesPage() {
                   {isAnswerCorrect === true ? (
                     <button
                       onClick={handleComplete}
-                      className="inline-flex items-center justify-center rounded-full bg-amber-400 px-5 py-2 text-sm font-medium text-white shadow transition hover:scale-[1.02]"
+                      className="inline-flex items-center justify-center rounded-full bg-[#7adf36] px-5 py-2 text-sm font-medium text-white shadow shadow-emerald-200 transition hover:translate-y-[1px]"
                     >
                       {currentIndex === exercises.length - 1
                         ? 'Completa il percorso'
@@ -199,13 +199,13 @@ export default function RulesExercisesPage() {
             </div>
           ) : (
             <div className="space-y-4 text-center">
-              <div className="inline-flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-700 shadow-sm dark:border-emerald-400/60 dark:bg-emerald-900/20 dark:text-emerald-200">
+              <div className="inline-flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-700 shadow-sm shadow-emerald-100">
                 <CheckCircle2 className="size-5" />
                 <span>Percorso completato! Ottimo lavoro.</span>
               </div>
               <button
                 onClick={handleRestart}
-                className="inline-flex items-center justify-center rounded-full border border-stone-200 px-5 py-2 text-sm font-medium transition hover:bg-stone-50 dark:border-stone-700 dark:hover:bg-stone-800"
+                className="inline-flex items-center justify-center rounded-full border border-stone-200 px-5 py-2 text-sm font-medium transition hover:bg-stone-50"
               >
                 Ricomincia percorso
               </button>
@@ -223,10 +223,10 @@ export default function RulesExercisesPage() {
                     : 'idle';
               const indicatorClass =
                 state === 'done'
-                  ? 'bg-emerald-400 dark:bg-emerald-500'
+                  ? 'bg-emerald-400'
                   : state === 'active'
-                    ? 'bg-amber-400'
-                    : 'bg-stone-300 dark:bg-stone-600';
+                    ? 'bg-sky-400'
+                    : 'bg-stone-300';
 
               return (
                 <span

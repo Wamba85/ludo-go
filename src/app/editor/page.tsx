@@ -346,161 +346,167 @@ export default function SgfEditorPage() {
         </div>
       }
     >
-      <div className="flex flex-col px-6 py-8 min-h-screen">
-        {header}
+      <div className="min-h-screen bg-[#f7fbff] px-6 py-8">
+        <div className="mx-auto flex w-full max-w-6xl flex-col">
+          {header}
 
-      <div className="grid w-full grid-cols-1 lg:grid-cols-[minmax(300px,360px)_1fr] gap-6">
-        {/* Pannello controlli */}
-        <Card className="rounded-2xl shadow-md">
-          <CardHeader>
-            <CardTitle className="text-lg">Sorgente</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            {/* Strumenti */}
-            <div>
-              <label className="block text-sm mb-1">Strumenti</label>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant={tool === 'play' ? 'default' : 'secondary'}
-                  onClick={() => setTool('play')}
-                  title="Gioca pietre alternate"
-                >
-                  ↔︎
-                </Button>
-                <Button
-                  variant={tool === 'labelNUM' ? 'default' : 'secondary'}
-                  onClick={() => setTool('labelNUM')}
-                  title="Etichetta numerica sequenziale"
-                >
-                  1
-                </Button>
-                <Button
-                  variant={tool === 'labelLET' ? 'default' : 'secondary'}
-                  onClick={() => setTool('labelLET')}
-                  title="Etichetta alfabetica sequenziale"
-                >
-                  A
-                </Button>
-                <Button
-                  variant={tool === 'setupB' ? 'default' : 'secondary'}
-                  onClick={() => setTool('setupB')}
-                  title="Piazza pietre nere (setup)"
-                >
-                  ⚫
-                </Button>
-                <Button
-                  variant={tool === 'setupW' ? 'default' : 'secondary'}
-                  onClick={() => setTool('setupW')}
-                  title="Piazza pietre bianche (setup)"
-                >
-                  ⚪
-                </Button>
-                <Button
-                  variant={tool === 'labelTR' ? 'default' : 'secondary'}
-                  onClick={() => setTool('labelTR')}
-                  title="Etichetta triangolo"
-                >
-                  △
-                </Button>
-                <Button
-                  variant={tool === 'labelSQ' ? 'default' : 'secondary'}
-                  onClick={() => setTool('labelSQ')}
-                  title="Etichetta quadrato"
-                >
-                  □
-                </Button>
-                <Button
-                  variant={tool === 'labelCR' ? 'default' : 'secondary'}
-                  onClick={() => setTool('labelCR')}
-                  title="Etichetta cerchio"
-                >
-                  ○
-                </Button>
-                <Button
-                  variant={tool === 'labelMA' ? 'default' : 'secondary'}
-                  onClick={() => setTool('labelMA')}
-                  title="Etichetta X"
-                >
-                  ✕
-                </Button>
-              </div>
-              <p className="mt-1 text-xs text-stone-500">
-                In modalità setup le pietre non modificano l&apos;albero mosse e
-                sono visibili alla mossa 0.
-              </p>
-            </div>
-            {/* Nuovo vuoto */}
-            <div className="flex items-end gap-3">
-              <div className="flex-1">
-                <label className="block text-sm mb-1">Nuovo goban vuoto</label>
-                <select
-                  value={boardSize}
-                  onChange={(e) => setBoardSize(parseInt(e.target.value, 10))}
-                  className="w-full rounded border px-2 py-1 text-sm"
-                >
-                  <option value={9}>9x9</option>
-                  <option value={13}>13x13</option>
-                  <option value={19}>19x19</option>
-                </select>
-              </div>
-              <Button onClick={createEmpty}>Crea</Button>
-            </div>
+          <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-[minmax(300px,360px)_1fr]">
+            {/* Pannello controlli */}
+            <Card className="rounded-3xl border-emerald-100 bg-white/90 shadow-lg shadow-emerald-100">
+              <CardHeader>
+                <CardTitle className="text-lg">Sorgente</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4">
+                {/* Strumenti */}
+                <div>
+                  <label className="block text-sm mb-1">Strumenti</label>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant={tool === 'play' ? 'default' : 'secondary'}
+                      onClick={() => setTool('play')}
+                      title="Gioca pietre alternate"
+                    >
+                      ↔︎
+                    </Button>
+                    <Button
+                      variant={tool === 'labelNUM' ? 'default' : 'secondary'}
+                      onClick={() => setTool('labelNUM')}
+                      title="Etichetta numerica sequenziale"
+                    >
+                      1
+                    </Button>
+                    <Button
+                      variant={tool === 'labelLET' ? 'default' : 'secondary'}
+                      onClick={() => setTool('labelLET')}
+                      title="Etichetta alfabetica sequenziale"
+                    >
+                      A
+                    </Button>
+                    <Button
+                      variant={tool === 'setupB' ? 'default' : 'secondary'}
+                      onClick={() => setTool('setupB')}
+                      title="Piazza pietre nere (setup)"
+                    >
+                      ⚫
+                    </Button>
+                    <Button
+                      variant={tool === 'setupW' ? 'default' : 'secondary'}
+                      onClick={() => setTool('setupW')}
+                      title="Piazza pietre bianche (setup)"
+                    >
+                      ⚪
+                    </Button>
+                    <Button
+                      variant={tool === 'labelTR' ? 'default' : 'secondary'}
+                      onClick={() => setTool('labelTR')}
+                      title="Etichetta triangolo"
+                    >
+                      △
+                    </Button>
+                    <Button
+                      variant={tool === 'labelSQ' ? 'default' : 'secondary'}
+                      onClick={() => setTool('labelSQ')}
+                      title="Etichetta quadrato"
+                    >
+                      □
+                    </Button>
+                    <Button
+                      variant={tool === 'labelCR' ? 'default' : 'secondary'}
+                      onClick={() => setTool('labelCR')}
+                      title="Etichetta cerchio"
+                    >
+                      ○
+                    </Button>
+                    <Button
+                      variant={tool === 'labelMA' ? 'default' : 'secondary'}
+                      onClick={() => setTool('labelMA')}
+                      title="Etichetta X"
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                  <p className="mt-1 text-xs text-stone-500">
+                    In modalità setup le pietre non modificano l&apos;albero
+                    mosse e sono visibili alla mossa 0.
+                  </p>
+                </div>
+                {/* Nuovo vuoto */}
+                <div className="flex items-end gap-3">
+                  <div className="flex-1">
+                    <label className="block text-sm mb-1">
+                      Nuovo goban vuoto
+                    </label>
+                    <select
+                      value={boardSize}
+                      onChange={(e) =>
+                        setBoardSize(parseInt(e.target.value, 10))
+                      }
+                      className="w-full rounded border px-2 py-1 text-sm"
+                    >
+                      <option value={9}>9x9</option>
+                      <option value={13}>13x13</option>
+                      <option value={19}>19x19</option>
+                    </select>
+                  </div>
+                  <Button onClick={createEmpty}>Crea</Button>
+                </div>
 
-            {/* Da file SGF */}
-            <div>
-              <label className="block text-sm mb-1">Carica da file SGF</label>
-              <input
-                type="file"
-                accept=".sgf,text/plain"
-                onChange={handleSgfFile}
-                className="block w-full text-sm"
-              />
-            </div>
+                {/* Da file SGF */}
+                <div>
+                  <label className="block text-sm mb-1">Carica da file SGF</label>
+                  <input
+                    type="file"
+                    accept=".sgf,text/plain"
+                    onChange={handleSgfFile}
+                    className="block w-full text-sm"
+                  />
+                </div>
 
-            {/* Da testo SGF */}
-            <div>
-              <label className="block text-sm mb-1">Incolla SGF</label>
-              <textarea
-                value={sgfText}
-                onChange={(e) => setSgfText(e.target.value)}
-                rows={6}
-                className="w-full rounded border px-2 py-1 text-sm font-mono"
-                placeholder="(;GM[1]SZ[19];B[qd];W[dp])"
-              />
-              <div className="mt-2 flex gap-2">
-                <Button variant="secondary" onClick={applySgfText}>
-                  Applica SGF
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setSgfText('');
-                  }}
-                >
-                  Svuota
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                {/* Da testo SGF */}
+                <div>
+                  <label className="block text-sm mb-1">Incolla SGF</label>
+                  <textarea
+                    value={sgfText}
+                    onChange={(e) => setSgfText(e.target.value)}
+                    rows={6}
+                    className="w-full rounded border px-2 py-1 text-sm font-mono"
+                    placeholder="(;GM[1]SZ[19];B[qd];W[dp])"
+                  />
+                  <div className="mt-2 flex gap-2">
+                    <Button variant="secondary" onClick={applySgfText}>
+                      Applica SGF
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setSgfText('');
+                      }}
+                    >
+                      Svuota
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* Area editor Goban */}
-        <Card className="rounded-2xl shadow-md">
-          <CardContent className="p-4">
-            <Goban
-              key={`${rev}-${boardSize}`}
-              sgfMoves={sgfText}
-              BOARD_SIZE={boardSize}
-              showMoveTree={true}
-              exerciseOptions={{ setup }}
-              onBoardClick={onBoardClick}
-              labels={labels}
-              onMetaChange={onMetaChange}
-            />
-          </CardContent>
-        </Card>
+            {/* Area editor Goban */}
+            <Card className="rounded-3xl border-emerald-100 bg-white/90 shadow-lg shadow-emerald-100">
+              <CardContent className="p-4">
+                <Goban
+                  key={`${rev}-${boardSize}`}
+                  sgfMoves={sgfText}
+                  BOARD_SIZE={boardSize}
+                  showMoveTree={true}
+                  exerciseOptions={{ setup }}
+                  onBoardClick={onBoardClick}
+                  labels={labels}
+                  onMetaChange={onMetaChange}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
-    </div>
     </RequireAuth>
   );
 }

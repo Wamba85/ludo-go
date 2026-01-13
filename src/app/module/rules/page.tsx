@@ -6,8 +6,6 @@ import Link from 'next/link';
 import {
   ArrowLeft,
   CheckCircle2,
-  Moon,
-  SunMedium,
   Target,
   PlayCircle,
   Ban,
@@ -84,14 +82,14 @@ function ProgressBar({ value }: { value: number }) {
   return (
     <div
       aria-label="Progresso lezione"
-      className="h-2 w-full overflow-hidden rounded-full bg-muted"
+      className="h-2 w-full overflow-hidden rounded-full bg-[#e3f7d7]"
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={value}
     >
       <div
-        className="h-full bg-amber-400 transition-[width] duration-300"
+        className="h-full bg-[#7adf36] transition-[width] duration-300"
         style={{ width: `${value}%` }}
       />
     </div>
@@ -109,7 +107,7 @@ function DotNav({ items }: { items: { id: string; label: string }[] }) {
           <li key={it.id}>
             <a
               href={`#${it.id}`}
-              className="block size-3 rounded-full bg-stone-300 ring-2 ring-stone-300 hover:bg-amber-400 focus:outline-none focus:ring-amber-400"
+              className="block size-3 rounded-full bg-[#d4f0b2] ring-2 ring-[#d4f0b2] hover:bg-[#7adf36] focus:outline-none focus:ring-[#7adf36]"
               title={it.label}
             >
               <span className="sr-only">{it.label}</span>
@@ -138,7 +136,7 @@ function Section({
       className="snap-start flex min-h-[100svh] w-full items-center justify-center px-4 py-16"
       aria-labelledby={`${id}-title`}
     >
-      <div className="mx-auto w-full max-w-5xl rounded-3xl border bg-card/70 p-6 shadow-sm backdrop-blur">
+      <div className="mx-auto w-full max-w-5xl rounded-3xl border border-emerald-100 bg-white/90 p-6 shadow-lg shadow-emerald-100 backdrop-blur">
         <header className="mb-6 flex flex-col gap-2">
           <h2 id={`${id}-title`} className="text-2xl font-semibold">
             {title}
@@ -202,7 +200,7 @@ function IntersectionGrid({
     <div
       ref={containerRef}
       onClick={handleContainerClick}
-      className="relative mx-auto aspect-square w-full max-w-[360px] select-none rounded-xl bg-amber-100/50 p-4 ring-1 ring-stone-300"
+      className="relative mx-auto aspect-square w-full max-w-[360px] select-none rounded-xl bg-[#e3f7d7]/50 p-4 ring-1 ring-stone-300"
     >
       {/* Grid lines */}
       <div
@@ -237,7 +235,7 @@ function IntersectionGrid({
               }}
               className={`size-3 rounded-full transition ${
                 isTarget
-                  ? 'animate-pulse bg-amber-400 shadow-[0_0_0_4px_rgba(251,191,36,0.3)]'
+                  ? 'animate-pulse bg-[#7adf36] shadow-[0_0_0_4px_rgba(122,223,54,0.35)]'
                   : 'bg-stone-400'
               }`}
               aria-label={isTarget ? 'Intersezione obiettivo' : 'Intersezione'}
@@ -252,13 +250,6 @@ function IntersectionGrid({
 export default function RulesPage() {
   const { percent, progress, setProgress } = useLocalProgress();
   const [ariaMsg, setAriaMsg] = useState('');
-  const [themeDark, setThemeDark] = useState(false);
-
-  useEffect(() => {
-    // restore theme from document
-    const hasDark = document.documentElement.classList.contains('dark');
-    setThemeDark(hasDark);
-  }, []);
 
   const setDone = (id: SectionId, done = true) => {
     setProgress((prev) => (prev[id] === done ? prev : { ...prev, [id]: done }));
@@ -270,18 +261,6 @@ export default function RulesPage() {
     requestAnimationFrame(() => setAriaMsg(msg));
   };
 
-  const toggleTheme = () => {
-    const el = document.documentElement;
-    if (el.classList.contains('dark')) {
-      el.classList.remove('dark');
-      setThemeDark(false);
-      announce('Tema chiaro attivato');
-    } else {
-      el.classList.add('dark');
-      setThemeDark(true);
-      announce('Tema scuro attivato');
-    }
-  };
 
   // Local UI states for demos
   // Stato sezione "Turni e colori"
@@ -501,13 +480,13 @@ export default function RulesPage() {
         </div>
       }
     >
-      <div className="relative min-h-[100svh] bg-gradient-to-b from-white to-amber-50 dark:from-zinc-950 dark:to-zinc-900">
+      <div className="relative min-h-[100svh] bg-[#f7fbff]">
       {/* Sticky header */}
-      <header className="pointer-events-none sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur">
+      <header className="pointer-events-none sticky top-0 z-50 w-full border-b border-emerald-100 bg-white/90 shadow-sm shadow-emerald-100 backdrop-blur">
         <div className="pointer-events-auto mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-1 rounded-lg border bg-card px-2 py-1 text-sm shadow-sm hover:shadow"
+            className="inline-flex items-center gap-1 rounded-2xl border border-emerald-100 bg-white/90 px-3 py-1.5 text-sm font-medium text-stone-700 shadow-sm shadow-emerald-100 transition hover:bg-white"
           >
             <ArrowLeft className="size-4" />
             Dashboard
@@ -515,25 +494,10 @@ export default function RulesPage() {
           <div className="ml-auto flex items-center gap-3">
             <a
               href="#quiz"
-              className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-3 py-1 text-sm font-medium text-white shadow hover:scale-[1.02]"
+              className="inline-flex items-center gap-1 rounded-full bg-[#7adf36] px-3 py-1 text-sm font-medium text-white shadow shadow-emerald-200 hover:scale-[1.02]"
             >
               <PlayCircle className="size-4" /> Quiz
             </a>
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="inline-flex size-9 items-center justify-center rounded-lg border bg-card text-foreground shadow-sm hover:shadow"
-              aria-label={
-                themeDark ? 'Attiva tema chiaro' : 'Attiva tema scuro'
-              }
-              title={themeDark ? 'Tema chiaro' : 'Tema scuro'}
-            >
-              {themeDark ? (
-                <SunMedium className="size-4" />
-              ) : (
-                <Moon className="size-4" />
-              )}
-            </button>
           </div>
         </div>
         <div className="mx-auto max-w-6xl px-4 pb-3">
@@ -573,13 +537,13 @@ export default function RulesPage() {
               <div className="flex flex-wrap gap-3 pt-2">
                 <a
                   href="#turni"
-                  className="inline-flex items-center gap-2 rounded-full bg-amber-400 px-5 py-3 text-white shadow hover:scale-[1.02]"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#7adf36] px-5 py-3 text-white shadow shadow-emerald-200 hover:scale-[1.02]"
                 >
                   <PlayCircle className="size-5" /> Impara in 3 minuti
                 </a>
                 <a
                   href="#quiz"
-                  className="inline-flex items-center gap-2 rounded-full border bg-card px-5 py-3 shadow hover:shadow-md"
+                  className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-white/90 px-5 py-3 text-stone-700 shadow-sm shadow-emerald-100 hover:shadow-md"
                 >
                   <Target className="size-5" /> Prova il quiz
                 </a>
@@ -636,8 +600,10 @@ export default function RulesPage() {
               </div>
               <div className="flex items-center gap-3">
                 <button
-                  className={`rounded-full px-4 py-2 text-white shadow ${
-                    firstPlayer === 1 ? 'bg-stone-900' : 'bg-stone-400'
+                  className={`rounded-full px-4 py-2 shadow ${
+                    firstPlayer === 1
+                      ? 'bg-stone-900 text-white'
+                      : 'bg-stone-200 text-stone-600'
                   } ${firstMoveLocked ? 'opacity-60 cursor-not-allowed' : 'hover:scale-[1.02]'}`}
                   disabled={firstMoveLocked}
                   onClick={() => {
@@ -649,8 +615,10 @@ export default function RulesPage() {
                   Gioca Nero
                 </button>
                 <button
-                  className={`rounded-full px-4 py-2 text-white shadow ${
-                    firstPlayer === 2 ? 'bg-amber-600' : 'bg-stone-400'
+                  className={`rounded-full px-4 py-2 shadow ${
+                    firstPlayer === 2
+                      ? 'border border-stone-200 bg-white text-stone-700'
+                      : 'bg-stone-200 text-stone-600'
                   } ${firstMoveLocked ? 'opacity-60 cursor-not-allowed' : 'hover:scale-[1.02]'}`}
                   disabled={firstMoveLocked}
                   onClick={() => {
@@ -842,7 +810,7 @@ export default function RulesPage() {
                 Prova a ricatturare
               </button>
               <button
-                className="rounded-full bg-amber-500 px-4 py-2 text-white shadow hover:scale-[1.02]"
+                className="rounded-full bg-[#7adf36] px-4 py-2 text-white shadow shadow-emerald-200 hover:scale-[1.02]"
                 onClick={() => {
                   setKoAltrove(true);
                   announce(
@@ -853,7 +821,7 @@ export default function RulesPage() {
                 Gioca altrove
               </button>
               {!koAltrove && (
-                <span className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
+                <span className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-[#f7fdf2] px-3 py-2 text-[#2f8d0c]">
                   <Ban className="size-4" /> Tooltip: aspetta un turno, gioca
                   altrove
                 </span>
@@ -1103,7 +1071,7 @@ export default function RulesPage() {
             </div>
             <Link
               href="/editor"
-              className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-5 py-3 font-medium text-white shadow hover:scale-[1.02]"
+              className="inline-flex items-center gap-2 rounded-full bg-[#5f9bff] px-5 py-3 font-medium text-white shadow shadow-blue-200 hover:scale-[1.02]"
             >
               Apri una board 9×9 e prova 10 mosse
             </Link>
@@ -1120,8 +1088,8 @@ export default function RulesPage() {
 
 function RecapCard({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
-    <div className="flex items-center gap-2 rounded-xl border bg-card px-3 py-2 text-sm shadow-sm">
-      <span className="text-amber-600">{icon}</span>
+    <div className="flex items-center gap-2 rounded-xl border border-emerald-100 bg-white/90 px-3 py-2 text-sm shadow-sm shadow-emerald-100">
+      <span className="text-[#2f8d0c]">{icon}</span>
       <span className="font-medium">{title}</span>
     </div>
   );

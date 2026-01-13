@@ -52,12 +52,12 @@ export default function TheoryPage() {
         </div>
       }
     >
-      <div className="flex flex-col items-center px-6 py-8 bg-stone-50 min-h-screen">
+      <div className="flex min-h-screen flex-col items-center bg-[#f7fbff] px-6 py-8">
         {/* Header */}
         <header className="mb-10 flex w-full max-w-4xl items-center justify-between">
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-1 rounded-xl border border-stone-200 bg-white/70 px-3 py-1.5 text-sm shadow-sm backdrop-blur hover:shadow-md"
+            className="inline-flex items-center gap-1 rounded-2xl border border-emerald-100 bg-white/90 px-3 py-1.5 text-sm font-medium text-stone-700 shadow-sm shadow-emerald-100 backdrop-blur transition hover:bg-white"
           >
             <ArrowLeft className="size-4" />
             Dashboard
@@ -73,7 +73,7 @@ export default function TheoryPage() {
           {rules.map((rule) => (
             <article
               key={rule.id}
-              className="relative overflow-hidden rounded-3xl bg-white shadow-md ring-1 ring-stone-100 backdrop-blur"
+              className="relative overflow-hidden rounded-3xl bg-white/90 shadow-lg shadow-emerald-100 ring-1 ring-emerald-50 backdrop-blur"
             >
               <div className="flex flex-col sm:flex-row items-center">
                 <div className="relative w-full sm:w-1/2 aspect-video">
@@ -97,7 +97,7 @@ export default function TheoryPage() {
         <footer className="mt-12 flex flex-col items-center gap-4">
           <Link
             href="/module/rules/exercises"
-            className="inline-flex items-center gap-2 rounded-full bg-amber-400 px-6 py-3 text-lg font-semibold text-white shadow-md transition hover:scale-105 hover:shadow-lg"
+            className="inline-flex items-center gap-2 rounded-2xl bg-[#7adf36] px-6 py-3 text-lg font-semibold text-white shadow-lg shadow-emerald-200 transition hover:translate-y-[1px]"
           >
             <PlayCircle className="size-5" />
             Inizia gli esercizi

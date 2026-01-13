@@ -15,7 +15,7 @@ export interface ButtonProps
 }
 
 const baseCls =
-  'inline-flex items-center justify-center font-medium transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 disabled:opacity-50 disabled:pointer-events-none';
+  'inline-flex items-center justify-center font-medium transition-colors rounded-2xl focus-visible:outline-none focus-visible:ring-2 disabled:opacity-50 disabled:pointer-events-none';
 
 const variantCls: Record<string, string> = {
   default:

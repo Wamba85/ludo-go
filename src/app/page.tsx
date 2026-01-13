@@ -79,15 +79,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-amber-50 via-white to-amber-100">
+    <div className="relative min-h-screen overflow-hidden bg-[#f7fbff]">
       <div className="pointer-events-none absolute inset-0 opacity-70">
-        <div className="absolute -left-10 top-10 h-64 w-64 rounded-full bg-amber-200 blur-3xl" />
-        <div className="absolute bottom-20 right-0 h-72 w-72 rounded-full bg-amber-300 blur-3xl" />
+        <div className="absolute -left-10 top-10 h-64 w-64 rounded-full bg-[#d4f0b2] blur-3xl" />
+        <div className="absolute bottom-20 right-0 h-72 w-72 rounded-full bg-[#cfe4ff] blur-3xl" />
       </div>
 
       <div className="relative mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-10">
         <header className="mb-10 flex items-center gap-3">
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-stone-900 text-amber-200 shadow-lg">
+          <div className="flex size-12 items-center justify-center rounded-2xl bg-[#78d64b] text-white shadow-lg shadow-emerald-200">
             <Sparkles className="size-6" />
           </div>
           <div>
@@ -101,7 +101,7 @@ export default function LoginPage() {
         </header>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-          <Card className="rounded-3xl border-amber-100 bg-white/80 shadow-xl shadow-amber-200/40 backdrop-blur">
+          <Card className="rounded-3xl border border-emerald-100 bg-white/90 shadow-xl shadow-emerald-200 backdrop-blur">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-2xl font-semibold text-stone-900">
@@ -109,7 +109,7 @@ export default function LoginPage() {
                     ? 'Bentornato! Effettua l’accesso'
                     : 'Crea il tuo account'}
                 </CardTitle>
-                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                <span className="rounded-full bg-[#e3f7d7] px-3 py-1 text-xs font-semibold text-[#2f8d0c]">
                   Firebase Auth
                 </span>
               </div>
@@ -121,7 +121,7 @@ export default function LoginPage() {
               <form className="space-y-4" onSubmit={handleSubmit}>
                 <label className="block space-y-1 text-sm font-medium text-stone-700">
                   <span className="flex items-center gap-2">
-                    <Mail className="size-4 text-amber-500" />
+                    <Mail className="size-4 text-[#2f8d0c]" />
                     Email
                   </span>
                   <input
@@ -129,7 +129,7 @@ export default function LoginPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-xl border border-stone-200 bg-white/70 px-3 py-2 text-sm shadow-inner shadow-amber-50 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
+                    className="w-full rounded-xl border border-stone-200 bg-white/70 px-3 py-2 text-sm shadow-inner shadow-emerald-100 outline-none transition focus:border-[#7adf36] focus:ring-2 focus:ring-[#b5e489]"
                     placeholder="tu@email.com"
                     autoComplete="email"
                   />
@@ -137,7 +137,7 @@ export default function LoginPage() {
 
                 <label className="block space-y-1 text-sm font-medium text-stone-700">
                   <span className="flex items-center gap-2">
-                    <Lock className="size-4 text-amber-500" />
+                    <Lock className="size-4 text-[#2f8d0c]" />
                     Password
                   </span>
                   <input
@@ -145,7 +145,7 @@ export default function LoginPage() {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-xl border border-stone-200 bg-white/70 px-3 py-2 text-sm shadow-inner shadow-amber-50 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
+                    className="w-full rounded-xl border border-stone-200 bg-white/70 px-3 py-2 text-sm shadow-inner shadow-emerald-100 outline-none transition focus:border-[#7adf36] focus:ring-2 focus:ring-[#b5e489]"
                     placeholder="••••••••"
                     autoComplete={
                       mode === 'login' ? 'current-password' : 'new-password'
@@ -160,7 +160,7 @@ export default function LoginPage() {
                 )}
 
                 <div className="flex items-center justify-between">
-                  <div className="flex gap-2 rounded-full bg-amber-50 p-1 text-xs font-semibold text-amber-700">
+                  <div className="flex gap-2 rounded-full bg-[#e3f7d7] p-1 text-xs font-semibold text-[#2f8d0c]">
                     <button
                       type="button"
                       onClick={() => setMode('login')}
@@ -183,7 +183,7 @@ export default function LoginPage() {
 
                   <button
                     type="button"
-                    className="text-xs font-medium text-amber-700 underline underline-offset-4"
+                    className="text-xs font-medium text-[#2f8d0c] underline underline-offset-4"
                     onClick={() =>
                       setMode((m) => (m === 'login' ? 'signup' : 'login'))
                     }
@@ -197,7 +197,7 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   disabled={pending}
-                  className="w-full rounded-xl bg-amber-500 text-white shadow-md shadow-amber-200 transition hover:bg-amber-600"
+                  className="w-full rounded-xl bg-[#7adf36] text-white shadow-md shadow-emerald-200 transition hover:bg-[#6ccf2f]"
                 >
                   {pending
                     ? 'Attendi...'
@@ -230,7 +230,7 @@ export default function LoginPage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-3xl border-amber-100 bg-gradient-to-b from-amber-100/70 via-white to-white shadow-xl shadow-amber-200/40 backdrop-blur">
+          <Card className="rounded-3xl border border-emerald-100 bg-white/90 shadow-xl shadow-emerald-200 backdrop-blur">
             <CardHeader>
               <CardTitle className="text-xl font-semibold text-stone-900">
                 Perché accedere?
@@ -244,9 +244,9 @@ export default function LoginPage() {
               {tips.map((tip, idx) => (
                 <div
                   key={idx}
-                  className="flex gap-3 rounded-2xl border border-amber-100 bg-white/80 p-3 text-sm text-stone-700 shadow-inner shadow-amber-50"
+                  className="flex gap-3 rounded-2xl border border-emerald-100 bg-white/80 p-3 text-sm text-stone-700 shadow-inner shadow-emerald-100"
                 >
-                  <span className="mt-1 inline-flex size-6 items-center justify-center rounded-full bg-amber-500/10 text-[11px] font-semibold text-amber-700">
+                  <span className="mt-1 inline-flex size-6 items-center justify-center rounded-full bg-[#e3f7d7] text-[11px] font-semibold text-[#2f8d0c]">
                     {idx + 1}
                   </span>
                   <p>{tip}</p>

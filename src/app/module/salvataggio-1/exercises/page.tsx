@@ -135,9 +135,9 @@ export default function SalvataggioExercisesPage() {
   }, [isLoading, loadError, status]);
 
   const statusTone = useMemo(() => {
-    if (loadError) return 'text-rose-600 dark:text-rose-400';
-    if (status === 'done') return 'text-emerald-600 dark:text-emerald-400';
-    if (status === 'error') return 'text-rose-600 dark:text-rose-400';
+    if (loadError) return 'text-rose-600';
+    if (status === 'done') return 'text-emerald-600';
+    if (status === 'error') return 'text-rose-600';
     return 'text-foreground';
   }, [loadError, status]);
 
@@ -229,12 +229,12 @@ export default function SalvataggioExercisesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background px-4 py-10">
+    <div className="min-h-screen bg-[#f7fbff] px-4 py-10">
       <div className="mx-auto w-full max-w-3xl space-y-6">
         <header className="flex items-center justify-between">
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
+            className="inline-flex items-center gap-2 rounded-2xl border border-emerald-100 bg-white/90 px-3 py-2 text-sm font-medium text-stone-700 shadow-sm shadow-emerald-100 transition hover:bg-white"
           >
             <ArrowLeft className="size-4" />
             Torna alla dashboard
@@ -246,7 +246,7 @@ export default function SalvataggioExercisesPage() {
           </span>
         </header>
 
-        <section className="rounded-3xl border bg-card/70 p-6 shadow-sm backdrop-blur">
+        <section className="rounded-3xl border border-emerald-100 bg-white/90 p-6 shadow-lg shadow-emerald-100 backdrop-blur">
           <div className="mb-6">
             <h1 className="text-2xl font-semibold">
               Percorso esercizi - Salvataggio 1
@@ -259,14 +259,14 @@ export default function SalvataggioExercisesPage() {
           <div className="mb-6">
             <div
               aria-label="Progresso percorso esercizi"
-              className="h-2 w-full overflow-hidden rounded-full bg-muted"
+              className="h-2 w-full overflow-hidden rounded-full bg-[#e3f7d7]"
               role="progressbar"
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={progressPercent}
             >
               <span
-                className="block h-full bg-amber-400 transition-[width]"
+                className="block h-full bg-[#7adf36] transition-[width]"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -277,7 +277,7 @@ export default function SalvataggioExercisesPage() {
 
           {!completed ? (
             <div className="space-y-6">
-              <div className="space-y-4 rounded-2xl border border-dashed border-amber-200 bg-amber-50/40 p-6 dark:border-amber-300/50 dark:bg-amber-900/10">
+              <div className="space-y-4 rounded-2xl border border-dashed border-[#d4f0b2] bg-[#f7fdf2] p-6">
                 <header className="space-y-2 text-center">
                   <h2 className="text-xl font-medium">
                     {currentExercise.title}
@@ -295,7 +295,7 @@ export default function SalvataggioExercisesPage() {
                   <button
                     type="button"
                     onClick={handleReset}
-                    className="inline-flex items-center gap-1 rounded-full border border-stone-200 px-3 py-1 text-xs font-medium text-foreground transition hover:bg-stone-50 dark:border-stone-700 dark:hover:bg-stone-800"
+                    className="inline-flex items-center gap-1 rounded-full border border-stone-200 px-3 py-1 text-xs font-medium text-foreground transition hover:bg-stone-50"
                   >
                     <RotateCcw className="size-3" />
                     Resetta esercizio
@@ -319,7 +319,7 @@ export default function SalvataggioExercisesPage() {
                   {status === 'done' ? (
                     <button
                       onClick={handleNext}
-                      className="inline-flex items-center justify-center rounded-full bg-amber-400 px-5 py-2 text-sm font-medium text-white shadow transition hover:scale-[1.02]"
+                      className="inline-flex items-center justify-center rounded-full bg-[#7adf36] px-5 py-2 text-sm font-medium text-white shadow shadow-emerald-200 transition hover:translate-y-[1px]"
                     >
                       {currentIndex === exercises.length - 1
                         ? 'Completa il percorso'
@@ -335,13 +335,13 @@ export default function SalvataggioExercisesPage() {
             </div>
           ) : (
             <div className="space-y-4 text-center">
-              <div className="inline-flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-700 shadow-sm dark:border-emerald-400/60 dark:bg-emerald-900/20 dark:text-emerald-200">
+              <div className="inline-flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-700 shadow-sm shadow-emerald-100">
                 <CheckCircle2 className="size-5" />
                 <span>Hai completato tutti gli esercizi di salvataggio 1!</span>
               </div>
               <button
                 onClick={handleRestartAll}
-                className="inline-flex items-center justify-center rounded-full border border-stone-200 px-5 py-2 text-sm font-medium transition hover:bg-stone-50 dark:border-stone-700 dark:hover:bg-stone-800"
+                className="inline-flex items-center justify-center rounded-full border border-stone-200 px-5 py-2 text-sm font-medium transition hover:bg-stone-50"
               >
                 Ricomincia percorso
               </button>
@@ -357,10 +357,10 @@ export default function SalvataggioExercisesPage() {
               const isActive =
                 idx === currentIndex && !completed && status !== 'done';
               const indicatorClass = isCompleted
-                ? 'bg-emerald-400 dark:bg-emerald-500'
+                ? 'bg-emerald-400'
                 : isActive
-                  ? 'bg-amber-400'
-                  : 'bg-stone-300 dark:bg-stone-600';
+                  ? 'bg-sky-400'
+                  : 'bg-stone-300';
               return (
                 <span
                   key={exercise.id}
