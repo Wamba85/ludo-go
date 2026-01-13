@@ -33,6 +33,8 @@ export default function RulesExercisesPage() {
   const [completed, setCompleted] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
+  const [speechId, setSpeechId] = useState(0);
+  const [speechText, setSpeechText] = useState<string | null>(null);
 
   const currentExercise = exercises[currentIndex];
   const completedCount = completed ? exercises.length : currentIndex;
@@ -49,7 +51,14 @@ export default function RulesExercisesPage() {
   const handleOptionSelect = (value: number) => {
     if (completed || isAnswerCorrect === true) return;
     setSelectedOption(value);
-    setIsAnswerCorrect(value === currentExercise.answer);
+    const isCorrect = value === currentExercise.answer;
+    setIsAnswerCorrect(isCorrect);
+    setSpeechText(
+      isCorrect
+        ? 'Complimenti! Risposta corretta!'
+        : 'Peccato! Riprova!',
+    );
+    setSpeechId((id) => id + 1);
   };
 
   const handleComplete = () => {
@@ -70,7 +79,7 @@ export default function RulesExercisesPage() {
   return (
     <div className="min-h-screen bg-[#f7fbff] px-4 py-10">
       <div className="mx-auto w-full max-w-3xl space-y-6">
-        <MascotIdle />
+        <MascotIdle speechId={speechId} speechText={speechText} />
         <header className="flex items-center justify-between">
           <Link
             href="/module/rules"

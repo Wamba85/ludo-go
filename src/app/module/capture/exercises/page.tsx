@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, CheckCircle2, RotateCcw } from 'lucide-react';
 import Goban from '@/components/goban/goban';
 import MascotIdle from '@/components/mascot-idle';
@@ -156,6 +156,9 @@ export default function CaptureExercisesPage() {
   const [totalMoves, setTotalMoves] = useState(0);
   const [revision, setRevision] = useState(0);
   const [completed, setCompleted] = useState(false);
+  const [speechId, setSpeechId] = useState(0);
+  const [speechText, setSpeechText] = useState<string | null>(null);
+  const prevStatusRef = useRef<Status>('idle');
 
   const currentExercise = exercises[currentIndex];
 
@@ -166,6 +169,15 @@ export default function CaptureExercisesPage() {
     setTotalMoves(0);
   }, [currentExercise]);
 
+  useEffect(() => {
+    if (status === prevStatusRef.current) return;
+    if (status === 'done') {
+      setSpeechText('Complimenti! Risposta corretta!');
+      setSpeechId((id) => id + 1);
+    }
+    prevStatusRef.current = status;
+  }, [status]);
+
   const progressPercent = useMemo(() => {
     if (completed) return 100;
     const doneCount = currentIndex + (status === 'done' ? 1 : 0);
@@ -175,6 +187,8 @@ export default function CaptureExercisesPage() {
   const handleWrongMove = () => {
     setStatus('error');
     setFeedback(currentExercise.errorMessage);
+    setSpeechText('Peccato! Riprova!');
+    setSpeechId((id) => id + 1);
   };
 
   const handleAdvance = (played: number, total: number) => {
@@ -230,7 +244,7 @@ export default function CaptureExercisesPage() {
   return (
     <div className="min-h-screen bg-[#f7fbff] px-4 py-10">
       <div className="mx-auto w-full max-w-3xl space-y-6">
-        <MascotIdle />
+        <MascotIdle speechId={speechId} speechText={speechText} />
         <header className="flex items-center justify-between">
           <Link
             href="/module/rules"

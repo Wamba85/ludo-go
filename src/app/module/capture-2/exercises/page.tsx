@@ -63,6 +63,8 @@ export default function Cattura2ExercisesPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [revision, setRevision] = useState(0);
   const [completed, setCompleted] = useState(false);
+  const [speechId, setSpeechId] = useState(0);
+  const [speechText, setSpeechText] = useState<string | null>(null);
   const sgfRootRef = useRef<MoveNode | null>(null);
   const sgfCursorRef = useRef<MoveNode | null>(null);
 
@@ -168,6 +170,8 @@ export default function Cattura2ExercisesPage() {
 
     if (!nextNode) {
       setStatus('error');
+      setSpeechText('Peccato! Riprova!');
+      setSpeechId((id) => id + 1);
       return true;
     }
 
@@ -185,18 +189,26 @@ export default function Cattura2ExercisesPage() {
     const userComment = nextNode.comment ?? '';
     if (YES_PATTERN.test(userComment)) {
       setStatus('done');
+      setSpeechText('Complimenti! Risposta corretta!');
+      setSpeechId((id) => id + 1);
       return false;
     }
     if (NO_PATTERN.test(userComment)) {
       setStatus('error');
+      setSpeechText('Peccato! Riprova!');
+      setSpeechId((id) => id + 1);
       return false;
     }
     if (autoNode?.comment && NO_PATTERN.test(autoNode.comment)) {
       setStatus('error');
+      setSpeechText('Peccato! Riprova!');
+      setSpeechId((id) => id + 1);
       return false;
     }
     if (!autoNode) {
       setStatus('done');
+      setSpeechText('Complimenti! Risposta corretta!');
+      setSpeechId((id) => id + 1);
     } else {
       setStatus('progress');
     }
@@ -232,7 +244,7 @@ export default function Cattura2ExercisesPage() {
   return (
     <div className="min-h-screen bg-[#f7fbff] px-4 py-10">
       <div className="mx-auto w-full max-w-3xl space-y-6">
-        <MascotIdle />
+        <MascotIdle speechId={speechId} speechText={speechText} />
         <header className="flex items-center justify-between">
           <Link
             href="/dashboard"
