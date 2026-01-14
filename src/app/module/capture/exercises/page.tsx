@@ -20,8 +20,8 @@ type CaptureExercise = {
 const exercises: CaptureExercise[] = [
   {
     id: 1,
-    title: 'Cattura centrale rapida',
-    description: 'Riduci le libertà e chiudi la presa in due mosse nere.',
+    title: 'Cattura la pietra bianca',
+    description: '',
     sgfPath: '/sgf/01_01_02_01.sgf',
     prompt:
       'Gioca la mossa di apertura nera per mettere la pietra bianca al centro in atari.',
@@ -231,16 +231,6 @@ export default function CaptureExercisesPage() {
     setTotalMoves(0);
   };
 
-  const handleRestartAll = () => {
-    setCompleted(false);
-    setCurrentIndex(0);
-    setStatus('idle');
-    setFeedback(exercises[0].prompt);
-    setPlayedMoves(0);
-    setTotalMoves(0);
-    setRevision((rev) => rev + 1);
-  };
-
   return (
     <div className="min-h-screen bg-[#f7fbff] px-4 py-10">
       <div className="mx-auto w-full max-w-3xl space-y-6">
@@ -375,16 +365,14 @@ export default function CaptureExercisesPage() {
             <div className="space-y-4 text-center">
               <div className="inline-flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-700 shadow-sm shadow-emerald-100">
                 <CheckCircle2 className="size-5" />
-                <span>
-                  Hai completato tutti gli esercizi di cattura 1!
-                </span>
+                <span>Hai completato tutti gli esercizi di cattura 1!</span>
               </div>
-              <button
-                onClick={handleRestartAll}
+              <Link
+                href="/dashboard"
                 className="inline-flex items-center justify-center rounded-full border border-stone-200 px-5 py-2 text-sm font-medium transition hover:bg-stone-50"
               >
-                Ricomincia percorso
-              </button>
+                Torna alla dashboard
+              </Link>
             </div>
           )}
 

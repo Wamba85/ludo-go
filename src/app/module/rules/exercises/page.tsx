@@ -69,13 +69,6 @@ export default function RulesExercisesPage() {
     setCurrentIndex((idx) => Math.min(exercises.length - 1, idx + 1));
   };
 
-  const handleRestart = () => {
-    setCurrentIndex(0);
-    setCompleted(false);
-    setSelectedOption(null);
-    setIsAnswerCorrect(null);
-  };
-
   return (
     <div className="min-h-screen bg-[#f7fbff] px-4 py-10">
       <div className="mx-auto w-full max-w-3xl space-y-6">
@@ -219,12 +212,12 @@ export default function RulesExercisesPage() {
                 <CheckCircle2 className="size-5" />
                 <span>Percorso completato! Ottimo lavoro.</span>
               </div>
-              <button
-                onClick={handleRestart}
+              <Link
+                href="/dashboard"
                 className="inline-flex items-center justify-center rounded-full border border-stone-200 px-5 py-2 text-sm font-medium transition hover:bg-stone-50"
               >
-                Ricomincia percorso
-              </button>
+                Torna alla dashboard
+              </Link>
             </div>
           )}
 

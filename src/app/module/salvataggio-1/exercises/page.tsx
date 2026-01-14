@@ -232,15 +232,6 @@ export default function SalvataggioExercisesPage() {
     sgfCursorRef.current = sgfRootRef.current;
   };
 
-  const handleRestartAll = () => {
-    setCompleted(false);
-    setCurrentIndex(0);
-    setStatus('idle');
-    setPlayedMoves(0);
-    setRevision((rev) => rev + 1);
-    sgfCursorRef.current = sgfRootRef.current;
-  };
-
   return (
     <div className="min-h-screen bg-[#f7fbff] px-4 py-10">
       <div className="mx-auto w-full max-w-3xl space-y-6">
@@ -357,12 +348,12 @@ export default function SalvataggioExercisesPage() {
                 <CheckCircle2 className="size-5" />
                 <span>Hai completato tutti gli esercizi di salvataggio 1!</span>
               </div>
-              <button
-                onClick={handleRestartAll}
+              <Link
+                href="/dashboard"
                 className="inline-flex items-center justify-center rounded-full border border-stone-200 px-5 py-2 text-sm font-medium transition hover:bg-stone-50"
               >
-                Ricomincia percorso
-              </button>
+                Torna alla dashboard
+              </Link>
             </div>
           )}
 
