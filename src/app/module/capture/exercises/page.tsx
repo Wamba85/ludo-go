@@ -246,11 +246,11 @@ export default function CaptureExercisesPage() {
       <div className="mx-auto w-full max-w-3xl space-y-6">
         <header className="flex items-center justify-between">
           <Link
-            href="/module/rules"
+            href="/dashboard"
             className="inline-flex items-center gap-2 rounded-2xl border border-emerald-100 bg-white/90 px-3 py-2 text-sm font-medium text-stone-700 shadow-sm shadow-emerald-100 transition hover:bg-white"
           >
             <ArrowLeft className="size-4" />
-            Torna al modulo regole
+            Torna alla dashboard
           </Link>
           <span className="text-xs text-muted-foreground">
             {completed

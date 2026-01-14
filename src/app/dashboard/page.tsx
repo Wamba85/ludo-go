@@ -11,6 +11,7 @@ import {
   Home,
   UserRound,
   MoreHorizontal,
+  Pencil,
   Crown,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -54,8 +55,8 @@ export default function Dashboard() {
           status: 'active' as StepStatus,
           href: '/module/capture-2/exercises',
         },
-        { id: 5, title: 'Finale semplice', status: 'locked' as StepStatus },
-        { id: 6, title: 'Counting', status: 'locked' as StepStatus },
+        { id: 5, title: 'In costruzione...', status: 'locked' as StepStatus },
+        { id: 6, title: 'In costruzione...', status: 'locked' as StepStatus },
       ] satisfies Step[],
     [],
   );
@@ -65,6 +66,7 @@ export default function Dashboard() {
 
   const nav = [
     { label: 'Learn', icon: Home, href: '/dashboard', active: true },
+    { label: 'Editor', icon: Pencil, href: '/editor' },
     { label: 'Profile', icon: UserRound, href: '/profile' },
     { label: 'More', icon: MoreHorizontal, href: '/more' },
   ];
