@@ -15,6 +15,11 @@ const eslintConfig = [
     'next/typescript',
     'plugin:prettier/recommended',
   ),
+  {
+    rules: {
+      'prettier/prettier': 'off',
+    },
+  },
 ];
 
 export default eslintConfig;

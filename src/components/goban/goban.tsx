@@ -239,10 +239,11 @@ export default function Goban({
   }, []);
 
   const rightColumnVisible = !boardOnly;
+  const { root, setCurrentNode } = state;
 
   const loopSteps = useMemo<MoveNode[]>(() => {
     const moves: MoveNode[] = [];
-    let node = state.root.children[0];
+    let node = root.children[0];
     while (node) {
       if (
         node.row >= 0 &&
@@ -254,7 +255,7 @@ export default function Goban({
       node = node.children[0];
     }
     return moves;
-  }, [state.root]);
+  }, [root]);
 
   const loopTimerRef = useRef<number | null>(null);
   useEffect(() => {
@@ -264,31 +265,31 @@ export default function Goban({
     }
     if (!loopPlaybackEnabled) return;
     if (loopSteps.length === 0) {
-      state.setCurrentNode(state.root);
+      setCurrentNode(root);
       return;
     }
 
     let stepIndex = -1;
-    state.setCurrentNode(state.root);
+    setCurrentNode(root);
 
     loopTimerRef.current = window.setInterval(() => {
       if (loopSteps.length === 0) {
         stepIndex = -1;
-        state.setCurrentNode(state.root);
+        setCurrentNode(root);
         return;
       }
       if (stepIndex < 0) {
         stepIndex = 0;
-        state.setCurrentNode(loopSteps[0]);
+        setCurrentNode(loopSteps[0]);
         return;
       }
       if (stepIndex >= loopSteps.length - 1) {
         stepIndex = -1;
-        state.setCurrentNode(state.root);
+        setCurrentNode(root);
         return;
       }
       stepIndex += 1;
-      state.setCurrentNode(loopSteps[stepIndex]);
+      setCurrentNode(loopSteps[stepIndex]);
     }, loopPlaybackIntervalMs);
 
     return () => {
@@ -301,15 +302,15 @@ export default function Goban({
     loopPlaybackEnabled,
     loopPlaybackIntervalMs,
     loopSteps,
-    state.root,
-    state.setCurrentNode,
+    root,
+    setCurrentNode,
   ]);
 
   type SequenceStep = { node: MoveNode };
   const sequenceSteps = useMemo<SequenceStep[]>(() => {
     if (!guidedSequence) return [];
     const moves: SequenceStep[] = [];
-    let node = state.root.children[0];
+    let node = root.children[0];
     while (node) {
       if (
         node.row >= 0 &&
@@ -321,7 +322,7 @@ export default function Goban({
       node = node.children[0];
     }
     return moves;
-  }, [guidedSequence, state.root]);
+  }, [guidedSequence, root]);
 
   const [, forceSequenceCursorUpdate] = useState(0);
   const sequenceCursorRef = useRef(0);
@@ -516,9 +517,9 @@ export default function Goban({
   const handleSetCurrentNode = useCallback(
     (node: MoveNode) => {
       if (isInteractionLocked) return;
-      state.setCurrentNode(node);
+      setCurrentNode(node);
     },
-    [isInteractionLocked, state.setCurrentNode],
+    [isInteractionLocked, setCurrentNode],
   );
 
   const boardContainer = (
