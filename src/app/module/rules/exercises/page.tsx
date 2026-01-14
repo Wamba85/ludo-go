@@ -54,9 +54,7 @@ export default function RulesExercisesPage() {
     const isCorrect = value === currentExercise.answer;
     setIsAnswerCorrect(isCorrect);
     setSpeechText(
-      isCorrect
-        ? 'Complimenti! Risposta corretta!'
-        : 'Peccato! Riprova!',
+      isCorrect ? 'Complimenti! Risposta corretta!' : 'Peccato! Riprova!',
     );
     setSpeechId((id) => id + 1);
   };

@@ -96,7 +96,8 @@ export function loadSgfToMoveTree(s: string) {
   if (meta.extras?.C && meta.extras.C.length) {
     uiRoot.comment = meta.extras.C.join('\n');
     // Remove from extras so we don't duplicate when exporting later.
-    const { C, ...rest } = meta.extras;
+    const rest = { ...meta.extras };
+    delete rest.C;
     meta.extras = rest;
   }
   return { meta, root: uiRoot };

@@ -88,7 +88,9 @@ export default function MascotIdle({
         </div>
         {bubbleText ? (
           <div className="absolute left-full top-[45%] ml-3 -translate-y-1/2">
-            <div className={`relative ${bubbleMaxWidthClass} rounded-2xl border border-stone-900 bg-white px-4 py-2 text-sm font-medium text-stone-700 shadow-sm shadow-emerald-100`}>
+            <div
+              className={`relative ${bubbleMaxWidthClass} rounded-2xl border border-stone-900 bg-white px-4 py-2 text-sm font-medium text-stone-700 shadow-sm shadow-emerald-100`}
+            >
               <span className="absolute -left-1 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-l border-stone-900 bg-white" />
               <div className={speechControls ? 'space-y-2' : undefined}>
                 <p>{bubbleText}</p>
