@@ -23,8 +23,7 @@ const exercises: CaptureExercise[] = [
     title: 'Cattura la pietra bianca',
     description: '',
     sgfPath: '/sgf/01_01_02_01.sgf',
-    prompt:
-      'Gioca la mossa di apertura nera per mettere la pietra bianca al centro in atari.',
+    prompt: '',
     progressMessage: 'Ottimo! Prosegui fino a togliere l’ultima libertà.',
     successMessage:
       'Sequenza completata: la pietra bianca centrale è catturata.',
@@ -33,71 +32,66 @@ const exercises: CaptureExercise[] = [
   },
   {
     id: 2,
-    title: 'Doppio atari',
-    description:
-      'Chiudi entrambe le libertà residue della pietra bianca rimasta isolata.',
+    title: 'Cattura le pietre bianche',
+    description: '',
     sgfPath: '/sgf/01_01_02_02.sgf',
-    prompt: 'Blocca la libertà più ovvia e prepara la mossa finale.',
+    prompt: '',
     progressMessage: 'Ben fatto. Manca solo l’ultima libertà da togliere.',
-    successMessage: 'Cattura completata! La pietra bianca non ha più libertà.',
+    successMessage:
+      'Cattura completata! Le pietre bianche non hanno più libertà.',
     errorMessage:
       'Non è la casella giusta. Conta le libertà e richiudi quella mancante.',
   },
   {
     id: 3,
-    title: 'Cattura sul lato destro',
-    description:
-      'Sfrutta il vantaggio posizionale per chiudere la pietra bianca sul lato destro.',
+    title: 'Cattura le pietre bianche',
+    description: '',
     sgfPath: '/sgf/01_01_02_03.sgf',
-    prompt: 'Gioca al punto chiave per entrare in atari.',
+    prompt: '',
     progressMessage: 'Ottimo! Completa ora la cattura.',
-    successMessage: 'Perfetto: nessuna libertà rimasta per la pietra bianca.',
+    successMessage: 'Perfetto: nessuna libertà rimasta per le pietre bianche.',
     errorMessage:
       'Quella mossa non chiude le libertà giuste. Ricontrolla la forma.',
   },
   {
     id: 4,
-    title: 'Angolo superiore',
-    description: 'Gestisci l’angolo mettendo pressione sulla pietra bianca.',
+    title: 'Cattura le pietre bianche',
+    description: '',
     sgfPath: '/sgf/01_01_02_04.sgf',
-    prompt: 'Gioca il primo atari e resta pronto a chiudere l’angolo.',
+    prompt: '',
     progressMessage: 'La pietra è in atari: procedi alla cattura.',
-    successMessage: 'Angolo assicurato! La pietra bianca è fuori dal goban.',
+    successMessage: 'Le pietre bianche sono fuori dal goban.',
     errorMessage:
       "Mossa sbagliata: nell'angolo serve precisione, individua la libertà corretta.",
   },
   {
     id: 5,
-    title: 'Angolo inferiore',
-    description:
-      'Ripeti l’esercizio di cattura in angolo, questa volta sul lato inferiore.',
+    title: 'Cattura le pietre bianche',
+    description: '',
     sgfPath: '/sgf/01_01_02_05.sgf',
-    prompt: 'Fissa l’atari iniziale per l’angolo basso.',
+    prompt: '',
     progressMessage: 'Manca solo l’ultima libertà da chiudere.',
-    successMessage: 'Ottimo lavoro: hai catturato anche questa pietra.',
+    successMessage: 'Ottimo lavoro: hai catturato anche queste pietre.',
     errorMessage:
-      'Non lasciare scappare la pietra: richiudi esattamente il punto corretto.',
+      'Non lasciare scappare le pietre: richiudi esattamente il punto corretto.',
   },
   {
     id: 6,
-    title: 'Atari immediato',
-    description:
-      'Individua subito il punto critico per mettere in atari la pietra bianca isolata.',
+    title: 'Cattura le pietre bianche',
+    description: '',
     sgfPath: '/sgf/01_01_02_06.sgf',
-    prompt: 'Chiudi l’unica libertà rimasta alla pietra bianca.',
-    progressMessage: 'Ben fatto! La pietra non ha più spazio per fuggire.',
+    prompt: '',
+    progressMessage: 'Ben fatto! Le pietre non hanno più spazio per fuggire.',
     successMessage: 'Cattura completata con una sola mossa precisa.',
     errorMessage:
       'Quella mossa non chiude la libertà giusta. Controlla ancora il gruppo.',
   },
   {
     id: 7,
-    title: 'Corsa nella zona centrale',
-    description:
-      'Segui la sequenza corretta per intrappolare il gruppo bianco che tenta di scappare.',
+    title: 'Cattura le pietre bianche',
+    description: '',
     sgfPath: '/sgf/01_01_02_07.sgf',
-    prompt:
-      'Gioca la prima mossa chiave, poi segui con precisione la sequenza.',
+    prompt: '',
     progressMessage: 'Continua a chiudere le libertà una dopo l’altra.',
     successMessage:
       'Grande lavoro! Il gruppo bianco è completamente catturato.',
@@ -106,11 +100,10 @@ const exercises: CaptureExercise[] = [
   },
   {
     id: 8,
-    title: 'Riduzione progressiva',
-    description:
-      'Riduci l’area di influenza bianca fino a completare la cattura sul lato sinistro.',
+    title: 'Cattura le pietre bianche',
+    description: '',
     sgfPath: '/sgf/01_01_02_08.sgf',
-    prompt: 'Chiudi la libertà cruciale per entrare in atari.',
+    prompt: '',
     progressMessage:
       'Ottimo blocco! Ora completa la sequenza fino alla cattura.',
     successMessage: 'Sequenza conclusa: il gruppo bianco è stato eliminato.',
@@ -119,28 +112,25 @@ const exercises: CaptureExercise[] = [
   },
   {
     id: 9,
-    title: 'Cattura in profondità',
-    description:
-      'Una sequenza più lunga: segui le mosse nere fino a togliere tutte le libertà.',
+    title: 'Cattura le pietre bianche',
+    description: '',
     sgfPath: '/sgf/01_01_02_09.sgf',
-    prompt: 'Gioca con calma: il primo atari guida tutta la sequenza.',
+    prompt: '',
     progressMessage:
       'Continua così! Il gruppo bianco sta esaurendo le libertà.',
-    successMessage: 'Perfetto! Hai completato una cattura lunga e precisa.',
+    successMessage: 'Perfetto! Hai completato la cattura.',
     errorMessage:
       'Sequenza interrotta: ricontrolla tutte le libertà residue del gruppo bianco.',
   },
   {
     id: 10,
-    title: 'Due varianti possibili',
-    description:
-      'Scegli la sequenza corretta per catturare il gruppo, tenendo conto delle risposte bianche.',
+    title: 'Cattura le pietre bianche',
+    description: '',
     sgfPath: '/sgf/01_01_02_10.sgf',
-    prompt:
-      'Avvia l’atari giusto: da qui si diramano due continuazioni possibili.',
+    prompt: '',
     progressMessage: 'Ottimo! Continua a seguire la variante principale.',
     successMessage:
-      'Sequenza completata! Hai gestito correttamente tutte le risposte bianche.',
+      'Sequenza completata! Hai gestito correttamente la cattura del gruppo bianco.',
     errorMessage:
       'La risposta scelta non chiude le libertà corrette. Torna indietro e riprova.',
   },
