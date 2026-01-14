@@ -57,6 +57,11 @@ interface GobanProps {
   };
   /** Autoplay SGF: se la mossa dell'utente e' nel tree, gioca la risposta */
   autoplay?: boolean;
+  /** Loop automatico della linea principale SGF */
+  loopPlayback?: {
+    enabled?: boolean;
+    intervalMs?: number;
+  };
 }
 
 export default function Goban({
@@ -71,11 +76,15 @@ export default function Goban({
   preloadSgfUrl,
   guidedSequence,
   autoplay = false,
+  loopPlayback,
 }: GobanProps) {
   const [sgfText, setSgfText] = useState(sgfMoves); // ← nuovo stato locale
   const state = useGobanState(sgfText, BOARD_SIZE, exerciseOptions); // ← usa sgfText
-  const [showLiberties, setShowLiberties] = useState(true);
+  const [showLiberties, setShowLiberties] = useState(false);
   const [showCoordinates, setShowCoordinates] = useState(true);
+  const loopPlaybackEnabled = loopPlayback?.enabled ?? false;
+  const loopPlaybackIntervalMs = Math.max(100, loopPlayback?.intervalMs ?? 800);
+  const isInteractionLocked = loopPlaybackEnabled;
   const MAX_TREE_NODES = 1200;
   const isTreeTooLarge = useMemo(() => {
     let count = 0;
@@ -153,8 +162,9 @@ export default function Goban({
   };
 
   /* flag per disabilitare i pulsanti << < > >> */
-  const disableBack = state.currentNode === state.root;
-  const disableForward = state.currentNode.children.length === 0;
+  const disableBack = isInteractionLocked || state.currentNode === state.root;
+  const disableForward =
+    isInteractionLocked || state.currentNode.children.length === 0;
 
   // Propagate meta changes to parent (e.g., when opening SGF from toolbar)
   // Use a ref to avoid firing the effect when the callback identity changes.
@@ -229,6 +239,71 @@ export default function Goban({
   }, []);
 
   const rightColumnVisible = !boardOnly;
+
+  const loopSteps = useMemo<MoveNode[]>(() => {
+    const moves: MoveNode[] = [];
+    let node = state.root.children[0];
+    while (node) {
+      if (
+        node.row >= 0 &&
+        node.col >= 0 &&
+        (node.player === 1 || node.player === 2)
+      ) {
+        moves.push(node);
+      }
+      node = node.children[0];
+    }
+    return moves;
+  }, [state.root]);
+
+  const loopTimerRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (loopTimerRef.current !== null) {
+      window.clearInterval(loopTimerRef.current);
+      loopTimerRef.current = null;
+    }
+    if (!loopPlaybackEnabled) return;
+    if (loopSteps.length === 0) {
+      state.setCurrentNode(state.root);
+      return;
+    }
+
+    let stepIndex = -1;
+    state.setCurrentNode(state.root);
+
+    loopTimerRef.current = window.setInterval(() => {
+      if (loopSteps.length === 0) {
+        stepIndex = -1;
+        state.setCurrentNode(state.root);
+        return;
+      }
+      if (stepIndex < 0) {
+        stepIndex = 0;
+        state.setCurrentNode(loopSteps[0]);
+        return;
+      }
+      if (stepIndex >= loopSteps.length - 1) {
+        stepIndex = -1;
+        state.setCurrentNode(state.root);
+        return;
+      }
+      stepIndex += 1;
+      state.setCurrentNode(loopSteps[stepIndex]);
+    }, loopPlaybackIntervalMs);
+
+    return () => {
+      if (loopTimerRef.current !== null) {
+        window.clearInterval(loopTimerRef.current);
+        loopTimerRef.current = null;
+      }
+    };
+  }, [
+    loopPlaybackEnabled,
+    loopPlaybackIntervalMs,
+    loopSteps,
+    state.root,
+    state.setCurrentNode,
+  ]);
 
   type SequenceStep = { node: MoveNode };
   const sequenceSteps = useMemo<SequenceStep[]>(() => {
@@ -399,9 +474,7 @@ export default function Goban({
 
   const getNextPlayerForAutoplay = () => {
     if (state.currentNode === state.root) {
-      return (
-        state.appliedSetup?.toPlay ?? state.root.children[0]?.player ?? 1
-      );
+      return state.appliedSetup?.toPlay ?? state.root.children[0]?.player ?? 1;
     }
     return state.currentNode.player === 1 ? 2 : 1;
   };
@@ -427,6 +500,7 @@ export default function Goban({
   };
 
   const handleIntersection = (r: number, c: number) => {
+    if (isInteractionLocked) return;
     if (onBoardClick && onBoardClick(r, c)) return;
     if (guidedSequence) {
       const handled = handleGuidedSequenceMove(r, c);
@@ -438,6 +512,14 @@ export default function Goban({
     }
     state.handleIntersectionClick(r, c);
   };
+
+  const handleSetCurrentNode = useCallback(
+    (node: MoveNode) => {
+      if (isInteractionLocked) return;
+      state.setCurrentNode(node);
+    },
+    [isInteractionLocked, state.setCurrentNode],
+  );
 
   const boardContainer = (
     <div
@@ -479,6 +561,7 @@ export default function Goban({
           setShowCoordinates={setShowCoordinates}
           onOpenSgf={handleOpenSgf}
           onExportSgf={handleExportSgf}
+          interactionLocked={isInteractionLocked}
         />
       )}
 
@@ -510,6 +593,7 @@ export default function Goban({
                   }
                   value={state.currentNode.comment ?? ''}
                   onChange={(e) => state.setCurrentComment(e.target.value)}
+                  readOnly={isInteractionLocked}
                 />
               </CardContent>
             </Card>
@@ -519,7 +603,7 @@ export default function Goban({
                 key={state.treeRev}
                 root={state.root}
                 currentNode={state.currentNode}
-                setCurrentNode={state.setCurrentNode}
+                setCurrentNode={handleSetCurrentNode}
               />
             )}
             {showMoveTree && isTreeTooLarge && (

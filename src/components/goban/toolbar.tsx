@@ -30,6 +30,7 @@ interface ToolbarProps {
   setShowLiberties: (v: boolean) => void;
   showCoordinates: boolean;
   setShowCoordinates: (v: boolean) => void;
+  interactionLocked?: boolean;
 
   /* navigation callbacks */
   toStart: () => void;
@@ -51,6 +52,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   setShowLiberties,
   showCoordinates,
   setShowCoordinates,
+  interactionLocked = false,
   toStart,
   back,
   forward,
@@ -82,6 +84,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 checked={showLiberties}
                 onCheckedChange={setShowLiberties}
                 id="toggle-liberties"
+                disabled={interactionLocked}
               />
               Libertà
             </label>
@@ -90,6 +93,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 checked={showCoordinates}
                 onCheckedChange={setShowCoordinates}
                 id="toggle-coordinates"
+                disabled={interactionLocked}
               />
               Coordinate
             </label>
@@ -101,7 +105,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               variant="secondary"
               size="icon"
               onClick={toStart}
-              disabled={disableBack}
+              disabled={disableBack || interactionLocked}
               aria-label="Vai all'inizio"
             >
               <ChevronsLeft className="h-4 w-4" />
@@ -110,7 +114,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               variant="secondary"
               size="icon"
               onClick={back}
-              disabled={disableBack}
+              disabled={disableBack || interactionLocked}
               aria-label="Mossa precedente"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -119,7 +123,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               variant="secondary"
               size="icon"
               onClick={forward}
-              disabled={disableForward}
+              disabled={disableForward || interactionLocked}
               aria-label="Mossa successiva"
             >
               <ChevronRight className="h-4 w-4" />
@@ -128,7 +132,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               variant="secondary"
               size="icon"
               onClick={toEnd}
-              disabled={disableForward}
+              disabled={disableForward || interactionLocked}
               aria-label="Vai alla fine"
             >
               <ChevronsRight className="h-4 w-4" />
@@ -142,6 +146,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               type="file"
               accept=".sgf,text/plain"
               className="hidden"
+              disabled={interactionLocked}
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (f) onOpenSgf(f);
@@ -151,11 +156,17 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <Button
               variant="secondary"
               size="default"
+              disabled={interactionLocked}
               onClick={() => document.getElementById(fileId)?.click()}
             >
               <Upload className="h-4 w-4 mr-2" /> Apri SGF
             </Button>
-            <Button variant="secondary" size="default" onClick={onExportSgf}>
+            <Button
+              variant="secondary"
+              size="default"
+              onClick={onExportSgf}
+              disabled={interactionLocked}
+            >
               <Download className="h-4 w-4 mr-2" /> Esporta SGF
             </Button>
           </div>

@@ -39,6 +39,11 @@ const LIBERTA_LINES = [
   'Gli spazi vuoti diagonali non contano come libertà.',
   'Le pietre adiacenti collegate ortogonalmente formano catene di pietre che condividono le libertà.',
 ];
+const CATTURA_LINES = [
+  'Quando tutte le libertà di una catena avversaria vengono occupate, le pietre vengono rimosse dal goban.',
+  "Nell'esempio la catena bianca ha soltanto una libertà. Quando nero la occupa le pietre vengono rimosse.",
+  "Le pietre catturate saranno considerati prigionieri dell'avversario e conteranno un punto ciascuno alla fine della partita.",
+];
 
 const labelsFromMeta = (meta?: GoMeta): Label[] => {
   if (!meta?.extras) return [];
@@ -84,8 +89,13 @@ export default function TheoryPage() {
   const isLibertaRule = activeRule.title === 'Libertà';
   const isCatturaRule = activeRule.title === 'Cattura';
   const speechLines = useMemo(
-    () => (isLibertaRule ? LIBERTA_LINES : [activeRule.description]),
-    [activeRule.description, isLibertaRule],
+    () =>
+      isLibertaRule
+        ? LIBERTA_LINES
+        : isCatturaRule
+          ? CATTURA_LINES
+          : [activeRule.description],
+    [activeRule.description, isCatturaRule, isLibertaRule],
   );
   const [speechIndex, setSpeechIndex] = useState(0);
   const [labels, setLabels] = useState<Label[]>([]);
@@ -257,6 +267,7 @@ export default function TheoryPage() {
                           labels={labels}
                           onMetaChange={handleMetaChange}
                           preloadSgfUrl="/sgf/cattura.sgf"
+                          loopPlayback={{ enabled: true, intervalMs: 2000 }}
                         />
                       </div>
                     ) : (
