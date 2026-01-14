@@ -1,6 +1,5 @@
 'use client';
 
-import { RequireAuth } from '@/components/auth/require-auth';
 import Goban from '@/components/goban/goban';
 import MascotIdle from '@/components/mascot-idle';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
@@ -144,27 +143,20 @@ export default function TheoryPage() {
     ) : null;
 
   return (
-    <RequireAuth
-      fallback={
-        <div className="flex min-h-screen items-center justify-center text-sm text-stone-500">
-          Caricamento...
-        </div>
-      }
-    >
-      <div className="relative min-h-screen bg-[#eaf7ef] text-stone-900">
-        <div
-          className="absolute inset-0 bg-[radial-gradient(900px_circle_at_15%_15%,rgba(255,255,255,0.9)_0%,rgba(255,255,255,0.4)_35%,rgba(234,247,239,0)_70%)]"
-          aria-hidden="true"
-        />
-        <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
+    <div className="relative min-h-screen bg-[#eaf7ef] text-stone-900">
+      <div
+        className="absolute inset-0 bg-[radial-gradient(900px_circle_at_15%_15%,rgba(255,255,255,0.9)_0%,rgba(255,255,255,0.4)_35%,rgba(234,247,239,0)_70%)]"
+        aria-hidden="true"
+      />
+      <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
 
-        <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Regole Base del Go"
-            className="w-full max-w-5xl rounded-[32px] border border-emerald-100/80 bg-white/95 p-6 shadow-2xl shadow-emerald-200/50 backdrop-blur"
-          >
+      <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Regole Base del Go"
+          className="w-full max-w-5xl rounded-[32px] border border-emerald-100/80 bg-white/95 p-6 shadow-2xl shadow-emerald-200/50 backdrop-blur"
+        >
             <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-emerald-700">
@@ -285,9 +277,8 @@ export default function TheoryPage() {
                 </div>
               </section>
             </div>
-          </div>
         </div>
       </div>
-    </RequireAuth>
+    </div>
   );
 }
