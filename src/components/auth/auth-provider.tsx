@@ -33,6 +33,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
+    if (!auth) {
+      setInitializing(false);
+      return;
+    }
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setInitializing(false);
@@ -41,18 +45,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
+    if (!auth) {
+      throw new Error('Firebase non configurato.');
+    }
     await signInWithEmailAndPassword(auth, email, password);
   };
 
   const signup = async (email: string, password: string) => {
+    if (!auth) {
+      throw new Error('Firebase non configurato.');
+    }
     await createUserWithEmailAndPassword(auth, email, password);
   };
 
   const loginWithGoogle = async () => {
+    if (!auth || !googleProvider) {
+      throw new Error('Firebase non configurato.');
+    }
     await signInWithPopup(auth, googleProvider);
   };
 
   const logout = async () => {
+    if (!auth) {
+      throw new Error('Firebase non configurato.');
+    }
     await signOut(auth);
   };
 
