@@ -1,6 +1,4 @@
 'use client';
-
-import { RequireAuth } from '@/components/auth/require-auth';
 import { useAuth } from '@/components/auth/auth-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -72,55 +70,46 @@ export default function Dashboard() {
   ];
 
   return (
-    <RequireAuth
-      fallback={
-        <div className="flex min-h-screen items-center justify-center text-sm text-stone-500">
-          Caricamento dashboard...
-        </div>
-      }
-    >
-      <div className="min-h-screen bg-[#f7fbff]">
-        <div className="mx-auto flex max-w-6xl gap-6 px-4 py-6 lg:px-8">
-          {/* Sidebar */}
-          <aside className="sticky top-6 hidden h-[calc(100vh-3rem)] w-56 flex-shrink-0 flex-col rounded-3xl bg-white/90 p-4 shadow-lg shadow-emerald-100 lg:flex">
-            <div className="mb-6 flex items-center gap-2">
-              <div className="flex size-10 items-center justify-center rounded-2xl bg-[#78d64b] text-white font-bold shadow-md">
-                Go
-              </div>
-              <span className="text-lg font-semibold text-stone-800">
-                Lingo
-              </span>
+    <div className="min-h-screen bg-[#f7fbff]">
+      <div className="mx-auto flex max-w-6xl gap-6 px-4 py-6 lg:px-8">
+        {/* Sidebar */}
+        <aside className="sticky top-6 hidden h-[calc(100vh-3rem)] w-56 flex-shrink-0 flex-col rounded-3xl bg-white/90 p-4 shadow-lg shadow-emerald-100 lg:flex">
+          <div className="mb-6 flex items-center gap-2">
+            <div className="flex size-10 items-center justify-center rounded-2xl bg-[#78d64b] text-white font-bold shadow-md">
+              Go
             </div>
-            <nav className="flex flex-col gap-2">
-              {nav.map((item) => {
-                const Icon = item.icon;
-                const activeCls = item.active
-                  ? 'bg-[#e3f7d7] text-[#2f8d0c] shadow-inner shadow-emerald-100'
-                  : 'text-stone-600 hover:bg-stone-50';
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className={`flex items-center gap-3 rounded-2xl px-3 py-2 font-medium transition ${activeCls}`}
-                  >
-                    <Icon className="size-5" />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </nav>
-            <div className="mt-auto space-y-2 text-sm text-stone-500">
-              <button
-                onClick={logout}
-                className="w-full rounded-2xl border border-stone-200 px-3 py-2 text-left font-medium text-stone-700 transition hover:bg-stone-50"
-              >
-                Esci
-              </button>
-              <div className="rounded-2xl border border-stone-100 bg-stone-50 px-3 py-2">
-                Sincronizzato con Firebase Auth
-              </div>
+            <span className="text-lg font-semibold text-stone-800">Lingo</span>
+          </div>
+          <nav className="flex flex-col gap-2">
+            {nav.map((item) => {
+              const Icon = item.icon;
+              const activeCls = item.active
+                ? 'bg-[#e3f7d7] text-[#2f8d0c] shadow-inner shadow-emerald-100'
+                : 'text-stone-600 hover:bg-stone-50';
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={`flex items-center gap-3 rounded-2xl px-3 py-2 font-medium transition ${activeCls}`}
+                >
+                  <Icon className="size-5" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+          <div className="mt-auto space-y-2 text-sm text-stone-500">
+            <button
+              onClick={logout}
+              className="w-full rounded-2xl border border-stone-200 px-3 py-2 text-left font-medium text-stone-700 transition hover:bg-stone-50"
+            >
+              Esci
+            </button>
+            <div className="rounded-2xl border border-stone-100 bg-stone-50 px-3 py-2">
+              Sincronizzato con Firebase Auth
             </div>
-          </aside>
+          </div>
+        </aside>
 
           {/* Main column */}
           <main className="flex-1">
@@ -268,8 +257,7 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </aside>
-        </div>
       </div>
-    </RequireAuth>
+    </div>
   );
 }
