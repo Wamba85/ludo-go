@@ -27,6 +27,8 @@ export interface MoveNode {
   depth: number;
   /** optional comment attached to this position */
   comment?: string;
+  /** optional labels (TR/SQ/CR/MA/LB) attached to this position */
+  labels?: Label[];
 }
 
 /** Simple helper for prisoner counters */

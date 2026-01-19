@@ -1,10 +1,63 @@
 import { parseSgf } from './parser';
 import { stringifyTree } from './stringify';
-import { astToGo, goToAst, GoMeta, GoNode, Color } from './go-semantic';
-import type { MoveNode } from '@/types/goban';
+import { astToGo, goToAst, GoMeta, GoNode, Color, coordToSgf } from './go-semantic';
+import type { Label, LabelKind, MoveNode } from '@/types/goban';
 
 const toPlayer = (c: Color): 1 | 2 => (c === 'B' ? 1 : 2);
 const toColor = (p: 1 | 2): Color => (p === 1 ? 'B' : 'W');
+
+const parsePoint = (pt: string) => {
+  if (!pt || pt.length < 2) return null;
+  return { r: pt.charCodeAt(1) - 97, c: pt.charCodeAt(0) - 97 };
+};
+
+const propsToLabels = (
+  props?: Record<string, string[]>,
+): Label[] | undefined => {
+  if (!props) return undefined;
+  const out: Label[] = [];
+  const addShape = (kind: LabelKind, key: 'TR' | 'SQ' | 'CR' | 'MA') => {
+    const vals = props[key] ?? [];
+    vals.forEach((pt) => {
+      const pos = parsePoint(pt);
+      if (!pos) return;
+      out.push({ r: pos.r, c: pos.c, kind });
+    });
+  };
+  addShape('TR', 'TR');
+  addShape('SQ', 'SQ');
+  addShape('CR', 'CR');
+  addShape('MA', 'MA');
+
+  const lbVals = props.LB ?? [];
+  lbVals.forEach((raw) => {
+    const [pt, text] = raw.split(':');
+    const pos = parsePoint(pt ?? '');
+    if (!pos || !text) return;
+    out.push({ r: pos.r, c: pos.c, kind: 'LB', text });
+  });
+
+  return out.length ? out : undefined;
+};
+
+const labelsToProps = (
+  labels?: Label[],
+): Record<string, string[]> | undefined => {
+  if (!labels || labels.length === 0) return undefined;
+  const props: Record<string, string[]> = {};
+  labels.forEach((lb) => {
+    if (lb.kind === 'LB') {
+      if (!lb.text) return;
+      const val = `${coordToSgf({ x: lb.c, y: lb.r })}:${lb.text}`;
+      props.LB = (props.LB ?? []).concat(val);
+      return;
+    }
+    const key = lb.kind as 'TR' | 'SQ' | 'CR' | 'MA';
+    const val = coordToSgf({ x: lb.c, y: lb.r });
+    props[key] = (props[key] ?? []).concat(val);
+  });
+  return Object.keys(props).length ? props : undefined;
+};
 
 function goToMoveTree(rootGo: GoNode): MoveNode {
   let nextId = 0;
@@ -41,6 +94,7 @@ function goToMoveTree(rootGo: GoNode): MoveNode {
       depth: uiParent.depth + 1,
       branch: branchBase,
       comment: go.props?.C ? go.props.C.join('\n') : undefined,
+      labels: propsToLabels(go.props),
     };
     uiParent.children.push(node);
 
@@ -69,12 +123,20 @@ function moveTreeToGo(root: MoveNode): GoNode {
         : { color: toColor(n.player), pt: { x: n.col, y: n.row } }
       : undefined;
 
-    const props = n.comment ? { C: [n.comment] } : undefined;
+    const props: Record<string, string[]> = {};
+    if (n.comment) props.C = [n.comment];
+    const labelProps = labelsToProps(n.labels);
+    if (labelProps) {
+      Object.keys(labelProps).forEach((k) => {
+        props[k] = labelProps[k];
+      });
+    }
+    const outProps = Object.keys(props).length ? props : undefined;
 
     return {
       id: `n${n.id}`,
       move,
-      props,
+      props: outProps,
       children: n.children.map(toGo),
     };
   };
@@ -100,6 +162,10 @@ export function loadSgfToMoveTree(s: string) {
     delete rest.C;
     meta.extras = rest;
   }
+  const rootLabels = propsToLabels(
+    (meta.extras ?? {}) as Record<string, string[]>,
+  );
+  if (rootLabels) uiRoot.labels = rootLabels;
   return { meta, root: uiRoot };
 }
 
@@ -110,6 +176,15 @@ export function exportMoveTreeToSgf(meta: GoMeta, root: MoveNode) {
   if (root.comment && root.comment.trim()) {
     const lines = [root.comment];
     metaExtras.C = lines; // overwrite or set; root comment is single string
+  }
+  if (root.labels !== undefined) {
+    const labelProps = labelsToProps(root.labels);
+    ['TR', 'SQ', 'CR', 'MA', 'LB'].forEach((k) => delete metaExtras[k]);
+    if (labelProps) {
+      Object.keys(labelProps).forEach((k) => {
+        metaExtras[k] = labelProps[k];
+      });
+    }
   }
   const metaWithRootC: GoMeta = { ...meta, extras: metaExtras };
   const ast = goToAst(metaWithRootC, goRoot);

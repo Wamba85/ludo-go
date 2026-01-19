@@ -20,11 +20,17 @@ import MoveTree from './move-tree';
 import Toolbar from './toolbar';
 import { AfterPlayCtx, Setup, useGobanState } from '@/hooks/use-goban-state';
 import type { Label, MoveNode } from '@/types/goban';
+import { CELL_SIZE, MARGIN } from '@/utils/constants';
 import { exportMoveTreeToSgf, defaultMeta } from '@/lib/sgf/moveNode-adapter';
 import type { GoMeta, Coord } from '@/lib/sgf/go-semantic';
-import { coordToSgf } from '@/lib/sgf/go-semantic';
 import { Card, CardContent } from '@/components/ui/card';
 // (useEffect already imported above)
+
+export type BoardClickCtx = {
+  getLabels: () => Label[];
+  setLabels: (updater: (labels: Label[]) => Label[]) => void;
+  currentNode: MoveNode;
+};
 
 interface GobanProps {
   sgfMoves: string;
@@ -35,7 +41,7 @@ interface GobanProps {
     onAfterPlay?: (ctx: AfterPlayCtx) => void;
   };
   /** Optional: intercept board clicks. Return true to stop default handling */
-  onBoardClick?: (r: number, c: number) => boolean | void;
+  onBoardClick?: (r: number, c: number, ctx?: BoardClickCtx) => boolean | void;
   /** Optional labels overlay to render */
   labels?: Label[];
   /** Notify parent when parsed meta changes (useful to import labels/setup) */
@@ -130,28 +136,7 @@ export default function Goban({
         ? { ...base, setup: { ...base.setup, AB, AW } }
         : base;
 
-    // Merge labels into extras (TR/SQ/CR/MA)
-    const extras: Record<string, string[]> = {
-      ...(metaSetupMerged.extras ?? {}),
-    };
-    if (labels && labels.length) {
-      const add = (k: 'TR' | 'SQ' | 'CR' | 'MA') => {
-        const pts = labels
-          .filter((l) => l.kind === k)
-          .map((l) => coordToSgf({ x: l.c, y: l.r }));
-        if (pts.length) extras[k] = (extras[k] ?? []).concat(pts);
-      };
-      add('TR');
-      add('SQ');
-      add('CR');
-      add('MA');
-      const lbVals = labels
-        .filter((l) => l.kind === 'LB' && l.text)
-        .map((l) => `${coordToSgf({ x: l.c, y: l.r })}:${l.text}`);
-      if (lbVals.length) extras.LB = (extras.LB ?? []).concat(lbVals);
-    }
-    const meta: GoMeta = { ...metaSetupMerged, extras };
-    const sgf = exportMoveTreeToSgf(meta, state.root);
+    const sgf = exportMoveTreeToSgf(metaSetupMerged, state.root);
     const a = document.createElement('a');
     a.href = URL.createObjectURL(
       new Blob([sgf], { type: 'text/plain;charset=utf-8' }),
@@ -213,7 +198,7 @@ export default function Goban({
     }
   }, [autoplay, sgfText, preloadSgfUrl]);
 
-  // Limit board size so it always fits the viewport height
+  // Limit board size to the viewport height, with a minimum readable size.
   const boardBoxRef = useRef<HTMLDivElement>(null);
   const [maxBoardWidth, setMaxBoardWidth] = useState<number | undefined>(
     undefined,
@@ -226,7 +211,12 @@ export default function Goban({
       const vh = window.innerHeight;
       const padding = 16; // bottom safety margin
       const avail = Math.max(120, Math.floor(vh - rect.top - padding));
-      setMaxBoardWidth(avail);
+      const minCellSize =
+        BOARD_SIZE <= 9 ? CELL_SIZE : Math.round(CELL_SIZE * 0.75);
+      const minBoardWidth = Math.round(
+        (BOARD_SIZE - 1) * minCellSize + MARGIN * 2,
+      );
+      setMaxBoardWidth(Math.max(minBoardWidth, avail));
     };
     const raf = requestAnimationFrame(recompute);
     window.addEventListener('resize', recompute);
@@ -236,7 +226,7 @@ export default function Goban({
       window.removeEventListener('resize', recompute);
       window.removeEventListener('orientationchange', recompute);
     };
-  }, []);
+  }, [BOARD_SIZE]);
 
   const rightColumnVisible = !boardOnly;
   const { root, setCurrentNode } = state;
@@ -502,7 +492,15 @@ export default function Goban({
 
   const handleIntersection = (r: number, c: number) => {
     if (isInteractionLocked) return;
-    if (onBoardClick && onBoardClick(r, c)) return;
+    if (
+      onBoardClick &&
+      onBoardClick(r, c, {
+        getLabels: () => state.currentNode.labels ?? [],
+        setLabels: state.setCurrentLabels,
+        currentNode: state.currentNode,
+      })
+    )
+      return;
     if (guidedSequence) {
       const handled = handleGuidedSequenceMove(r, c);
       if (handled) return;
@@ -522,6 +520,8 @@ export default function Goban({
     [isInteractionLocked, setCurrentNode],
   );
 
+  const boardLabels =
+    labels && labels.length ? labels : state.currentNode.labels ?? [];
   const boardContainer = (
     <div
       className={boardOnly ? 'w-full max-w-3xl' : 'flex-1 min-w-0'}
@@ -541,7 +541,7 @@ export default function Goban({
           showLiberties={showLiberties}
           showCoordinates={showCoordinates}
           onIntersectionClick={handleIntersection}
-          labels={labels}
+          labels={boardLabels}
         />
       </div>
     </div>
@@ -562,6 +562,7 @@ export default function Goban({
           setShowCoordinates={setShowCoordinates}
           onOpenSgf={handleOpenSgf}
           onExportSgf={handleExportSgf}
+          onPass={state.handlePass}
           interactionLocked={isInteractionLocked}
         />
       )}

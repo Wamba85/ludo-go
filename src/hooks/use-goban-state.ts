@@ -15,7 +15,7 @@ import {
   shiftBranches,
 } from '@/utils/go-maths';
 import { BOARD_SIZE_DEFAULT } from '@/utils/constants';
-import type { MoveNode } from '@/types/goban';
+import type { Label, MoveNode } from '@/types/goban';
 
 interface PrisonerCount {
   black: number;
@@ -136,9 +136,7 @@ export function useGobanState(
   /* --------------------------------------------------------------------- */
   /* 3. Click su una intersezione                                          */
   /* --------------------------------------------------------------------- */
-  const handleIntersectionClick = (row: number, col: number) => {
-    if (koPoint && koPoint[0] === row && koPoint[1] === col) return;
-
+  const insertMoveNode = (row: number, col: number) => {
     const existing = currentNode.children.find(
       (c) => c.row === row && c.col === col,
     );
@@ -183,12 +181,28 @@ export function useGobanState(
     setTreeRev((r) => r + 1);
   };
 
+  const handleIntersectionClick = (row: number, col: number) => {
+    if (koPoint && koPoint[0] === row && koPoint[1] === col) return;
+    insertMoveNode(row, col);
+  };
+
+  const handlePass = () => {
+    insertMoveNode(-1, -1);
+  };
+
   /* --------------------------------------------------------------------- */
   /* 3b. Commento per posizione                                             */
   /* --------------------------------------------------------------------- */
   const setCurrentComment = (text: string) => {
     // Salva sul nodo corrente e forza un re-render dell'albero
     currentNode.comment = text || undefined;
+    setTreeRev((r) => r + 1);
+  };
+
+  const setCurrentLabels = (updater: (labels: Label[]) => Label[]) => {
+    const current = currentNode.labels ?? [];
+    const next = updater(current);
+    currentNode.labels = next;
     setTreeRev((r) => r + 1);
   };
 
@@ -318,10 +332,12 @@ export function useGobanState(
     root,
     handleIntersectionClick,
     setCurrentComment,
+    setCurrentLabels,
     toStart,
     back,
     forward,
     toEnd,
+    handlePass,
     setCurrentNode,
     meta,
     appliedSetup: derivedSetup,

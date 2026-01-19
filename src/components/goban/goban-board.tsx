@@ -146,6 +146,7 @@ export default function GobanBoard({
 
   const chainLib = useChainLiberties(board);
   const starPoints = useMemo(() => getStarPoints(BOARD_SIZE), [BOARD_SIZE]);
+  const labelFontSize = Math.max(14, Math.round(CELL_SIZE * 0.45));
 
   return (
     <svg
@@ -308,15 +309,20 @@ export default function GobanBoard({
         const strokeWidth = 2.5;
         if (lb.kind === 'LB' && lb.text) {
           const cellVal = board[lb.r]?.[lb.c] ?? 0;
-          const fill = cellVal === 1 ? 'white' : 'black';
+          const fill = cellVal === 1 ? '#ffffff' : '#111111';
+          const stroke = cellVal === 1 ? '#000000' : '#ffffff';
           return (
             <text
               key={`LB${lb.r}-${lb.c}`}
               x={cx}
               y={cy + 5}
               textAnchor="middle"
-              fontSize={16}
+              fontSize={labelFontSize}
               fill={fill}
+              stroke={stroke}
+              strokeWidth={3}
+              paintOrder="stroke"
+              strokeLinejoin="round"
               fontWeight={700}
               pointerEvents="none"
             >

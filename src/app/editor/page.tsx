@@ -4,7 +4,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Goban from '@/components/goban/goban';
+import Goban, { type BoardClickCtx } from '@/components/goban/goban';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { loadSgfToMoveTree } from '@/lib/sgf/moveNode-adapter';
@@ -53,7 +53,8 @@ type Tool =
   | 'labelCR'
   | 'labelMA'
   | 'labelNUM'
-  | 'labelLET';
+  | 'labelLET'
+  | 'labelNUM_CUSTOM';
 
 export default function SgfEditorPage() {
   const [boardSize, setBoardSize] = useState<number>(19);
@@ -65,7 +66,6 @@ export default function SgfEditorPage() {
     stones: [],
     toPlay: 1,
   });
-  const [labels, setLabels] = useState<Label[]>([]);
 
   // setup.size segue boardSize
   useEffect(() => {
@@ -75,7 +75,6 @@ export default function SgfEditorPage() {
   const createEmpty = useCallback(() => {
     setSgfText('');
     setSetup({ size: boardSize, stones: [], toPlay: 1 });
-    setLabels([]);
     setRev((r) => r + 1);
   }, [boardSize]);
 
@@ -95,36 +94,6 @@ export default function SgfEditorPage() {
         s?.AB?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 1 }));
         s?.AW?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 2 }));
         setSetup({ size: meta.size ?? boardSize, stones, toPlay: 1 });
-        // importa labels (TR/SQ/CR/MA) dalle extras
-        const ex = (meta.extras ?? {}) as Record<string, string[]>;
-        const toLabels = (kind: LabelKind, arr?: string[]) =>
-          (arr ?? []).map(
-            (pt) =>
-              ({
-                r: pt.charCodeAt(1) - 97,
-                c: pt.charCodeAt(0) - 97,
-                kind,
-              }) as Label,
-          );
-        const shapes: Label[] = [
-          ...toLabels('TR', ex.TR),
-          ...toLabels('SQ', ex.SQ),
-          ...toLabels('CR', ex.CR),
-          ...toLabels('MA', ex.MA),
-        ];
-        const lbVals = (ex.LB ?? []).flatMap((s) => {
-          const [pt, text] = s.split(':');
-          if (!pt || !text) return [] as Label[];
-          return [
-            {
-              r: pt.charCodeAt(1) - 97,
-              c: pt.charCodeAt(0) - 97,
-              kind: 'LB' as const,
-              text,
-            },
-          ];
-        });
-        setLabels([...shapes, ...lbVals]);
       } catch {}
       setSgfText(txt);
       setRev((r) => r + 1);
@@ -145,43 +114,13 @@ export default function SgfEditorPage() {
       s?.AB?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 1 }));
       s?.AW?.forEach(({ x, y }) => stones.push({ r: y, c: x, color: 2 }));
       setSetup({ size: meta.size ?? boardSize, stones, toPlay: 1 });
-      // importa labels da extras
-      const ex = (meta.extras ?? {}) as Record<string, string[]>;
-      const toLabels = (kind: LabelKind, arr?: string[]) =>
-        (arr ?? []).map(
-          (pt) =>
-            ({
-              r: pt.charCodeAt(1) - 97,
-              c: pt.charCodeAt(0) - 97,
-              kind,
-            }) as Label,
-        );
-      const shapes: Label[] = [
-        ...toLabels('TR', ex.TR),
-        ...toLabels('SQ', ex.SQ),
-        ...toLabels('CR', ex.CR),
-        ...toLabels('MA', ex.MA),
-      ];
-      const lbVals = (ex.LB ?? []).flatMap((s) => {
-        const [pt, text] = s.split(':');
-        if (!pt || !text) return [] as Label[];
-        return [
-          {
-            r: pt.charCodeAt(1) - 97,
-            c: pt.charCodeAt(0) - 97,
-            kind: 'LB' as const,
-            text,
-          },
-        ];
-      });
-      setLabels([...shapes, ...lbVals]);
     } catch {}
     setRev((r) => r + 1);
   }, [sgfText, boardSize]);
 
   // Override click goban per strumenti setup
   const onBoardClick = useCallback(
-    (r: number, c: number) => {
+    (r: number, c: number, ctx?: BoardClickCtx) => {
       if (tool === 'play') return false; // usa logica normale
       // Label tools ---------------------------------------------------------
       const labelToolMap: Record<Tool, LabelKind | null> = {
@@ -194,9 +133,35 @@ export default function SgfEditorPage() {
         labelMA: 'MA',
         labelNUM: 'LB',
         labelLET: 'LB',
+        labelNUM_CUSTOM: 'LB',
       } as const;
       const lkind = labelToolMap[tool];
       if (lkind) {
+        if (!ctx) return true;
+        const getLabels = ctx.getLabels;
+        const setLabels = ctx.setLabels;
+        if (tool === 'labelNUM_CUSTOM') {
+          const existing = getLabels().find(
+            (l) => l.r === r && l.c === c && l.kind === 'LB',
+          );
+          const initial = existing?.text ?? '';
+          const raw = window.prompt('Inserisci un numero', initial);
+          if (raw === null) return true;
+          const text = raw.trim();
+          if (!/^\d+$/.test(text)) return true;
+          setLabels((arr) => {
+            const idx = arr.findIndex(
+              (l) => l.r === r && l.c === c && l.kind === 'LB',
+            );
+            if (idx >= 0) {
+              const next = arr.slice();
+              next[idx] = { r, c, kind: 'LB', text };
+              return next;
+            }
+            return [...arr, { r, c, kind: 'LB', text }];
+          });
+          return true;
+        }
         // Gestione specializzata per numeri/lettere
         if (tool === 'labelNUM' || tool === 'labelLET') {
           setLabels((arr) => {
@@ -283,7 +248,7 @@ export default function SgfEditorPage() {
 
   // Helpers numeri/lettere definiti fuori dal componente (vedi top file)
 
-  // Quando il Goban interno cambia meta (apertura SGF dalla sua toolbar), importa setup+labels
+  // Quando il Goban interno cambia meta (apertura SGF dalla sua toolbar), importa setup
   const onMetaChange = useCallback(
     (meta: GoMeta) => {
       setBoardSize(meta.size ?? boardSize);
@@ -295,35 +260,6 @@ export default function SgfEditorPage() {
         stones.push({ r: y, c: x, color: 2 }),
       );
       setSetup({ size: meta.size ?? boardSize, stones, toPlay: 1 });
-      const ex = (meta.extras ?? {}) as Record<string, string[]>;
-      const toLabels = (kind: LabelKind, arr?: string[]) =>
-        (arr ?? []).map(
-          (pt) =>
-            ({
-              r: pt.charCodeAt(1) - 97,
-              c: pt.charCodeAt(0) - 97,
-              kind,
-            }) as Label,
-        );
-      const shapes: Label[] = [
-        ...toLabels('TR', ex.TR),
-        ...toLabels('SQ', ex.SQ),
-        ...toLabels('CR', ex.CR),
-        ...toLabels('MA', ex.MA),
-      ];
-      const lbVals = (ex.LB ?? []).flatMap((s) => {
-        const [pt, text] = s.split(':');
-        if (!pt || !text) return [] as Label[];
-        return [
-          {
-            r: pt.charCodeAt(1) - 97,
-            c: pt.charCodeAt(0) - 97,
-            kind: 'LB' as const,
-            text,
-          },
-        ];
-      });
-      setLabels([...shapes, ...lbVals]);
     },
     [boardSize],
   );
@@ -366,6 +302,15 @@ export default function SgfEditorPage() {
                       title="Etichetta numerica sequenziale"
                     >
                       1
+                    </Button>
+                    <Button
+                      variant={
+                        tool === 'labelNUM_CUSTOM' ? 'default' : 'secondary'
+                      }
+                      onClick={() => setTool('labelNUM_CUSTOM')}
+                      title="Etichetta numerica personalizzata"
+                    >
+                      1?
                     </Button>
                     <Button
                       variant={tool === 'labelLET' ? 'default' : 'secondary'}
@@ -493,7 +438,6 @@ export default function SgfEditorPage() {
                   showMoveTree={true}
                   exerciseOptions={{ setup }}
                   onBoardClick={onBoardClick}
-                  labels={labels}
                   onMetaChange={onMetaChange}
                 />
               </CardContent>

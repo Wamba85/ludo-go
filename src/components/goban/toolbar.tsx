@@ -37,6 +37,7 @@ interface ToolbarProps {
   back: () => void;
   forward: () => void;
   toEnd: () => void;
+  onPass: () => void;
 
   /* disabled flags (calcolati dal contenitore) */
   disableBack: boolean;
@@ -57,6 +58,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   back,
   forward,
   toEnd,
+  onPass,
   disableBack,
   disableForward,
   onOpenSgf,
@@ -136,6 +138,15 @@ const Toolbar: React.FC<ToolbarProps> = ({
               aria-label="Vai alla fine"
             >
               <ChevronsRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="secondary"
+              size="default"
+              onClick={onPass}
+              disabled={interactionLocked}
+              aria-label="Passa"
+            >
+              Passa
             </Button>
           </div>
 
