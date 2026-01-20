@@ -45,6 +45,13 @@ const RULES: ReadonlyArray<Rule> = [
       "Il territorio e' l'insieme dei punti vuoti controllati da un giocatore.",
     img: '/theory/territory.svg',
   },
+  {
+    id: 5,
+    title: 'Occhi',
+    description:
+      'Una catena con due occhi veri non puo\' essere catturata.',
+    img: '/theory/capture.svg',
+  },
 ];
 
 const LIBERTA_LINES = [
@@ -66,6 +73,11 @@ const TERRITORIO_LINES = [
   "Il territorio e' formato dai punti vuoti circondati e protetti dalle tue pietre.",
   'Per contare il punteggio somma i punti di territorio e le pietre catturate.',
   'Le aree contese non sono territorio di nessuno.',
+];
+const OCCHI_LINES = [
+  'Un occhio e\' uno spazio vuoto interno circondato dalle tue pietre.',
+  'Con due occhi una catena non puo\' essere catturata.',
+  'Un solo occhio non basta: l\'avversario puo\' riempirlo.',
 ];
 
 const labelsFromMeta = (meta?: GoMeta): Label[] => {
@@ -113,6 +125,7 @@ export default function TheoryPage() {
   const isCatturaRule = activeRule.title === 'Cattura';
   const isKoRule = activeRule.title === 'Ko';
   const isTerritorioRule = activeRule.title === 'Territorio';
+  const isOcchiRule = activeRule.title === 'Occhi';
   const speechLines = useMemo(
     () =>
       isLibertaRule
@@ -123,13 +136,16 @@ export default function TheoryPage() {
             ? KO_LINES
             : isTerritorioRule
               ? TERRITORIO_LINES
-            : [activeRule.description],
+              : isOcchiRule
+                ? OCCHI_LINES
+              : [activeRule.description],
     [
       activeRule.description,
       isCatturaRule,
       isKoRule,
       isLibertaRule,
       isTerritorioRule,
+      isOcchiRule,
     ],
   );
   const [speechIndex, setSpeechIndex] = useState(0);
@@ -319,6 +335,19 @@ export default function TheoryPage() {
                         labels={labels}
                         onMetaChange={handleMetaChange}
                         preloadSgfUrl="/sgf/territorio.sgf"
+                        loopPlayback={{ enabled: true, intervalMs: 2000 }}
+                      />
+                    </div>
+                  ) : isOcchiRule ? (
+                    <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
+                      <Goban
+                        sgfMoves=""
+                        BOARD_SIZE={9}
+                        showMoveTree={false}
+                        boardOnly
+                        labels={labels}
+                        onMetaChange={handleMetaChange}
+                        preloadSgfUrl="/sgf/occhi.sgf"
                         loopPlayback={{ enabled: true, intervalMs: 2000 }}
                       />
                     </div>
