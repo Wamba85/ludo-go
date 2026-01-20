@@ -12,7 +12,7 @@ export function stringifyTree(t: SgfTree): string {
       (n) =>
         ';' +
         n.props
-          .map((p) => p.values.map((v) => `${p.id}[${esc(v)}]`).join(''))
+          .map((p) => `${p.id}${p.values.map((v) => `[${esc(v)}]`).join('')}`)
           .join(''),
     )
     .join('');

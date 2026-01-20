@@ -116,9 +116,14 @@ function goToMoveTree(rootGo: GoNode): MoveNode {
 
 function moveTreeToGo(root: MoveNode): GoNode {
   const toGo = (n: MoveNode): GoNode => {
-    const hasMove = n.depth >= 0;
+    const hasMove = n.parent !== null;
+    const isPass =
+      !Number.isFinite(n.row) ||
+      !Number.isFinite(n.col) ||
+      n.row < 0 ||
+      n.col < 0;
     const move = hasMove
-      ? n.row === -1 || n.col === -1
+      ? isPass
         ? { color: toColor(n.player), pass: true as const }
         : { color: toColor(n.player), pt: { x: n.col, y: n.row } }
       : undefined;

@@ -118,6 +118,11 @@ export default function SgfEditorPage() {
     setRev((r) => r + 1);
   }, [sgfText, boardSize]);
 
+  const handleGobanSgfTextChange = useCallback((text: string) => {
+    setSgfText(text);
+    setRev((r) => r + 1);
+  }, []);
+
   // Override click goban per strumenti setup
   const onBoardClick = useCallback(
     (r: number, c: number, ctx?: BoardClickCtx) => {
@@ -439,6 +444,7 @@ export default function SgfEditorPage() {
                   exerciseOptions={{ setup }}
                   onBoardClick={onBoardClick}
                   onMetaChange={onMetaChange}
+                  onSgfTextChange={handleGobanSgfTextChange}
                 />
               </CardContent>
             </Card>

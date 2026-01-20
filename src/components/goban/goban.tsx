@@ -46,6 +46,8 @@ interface GobanProps {
   labels?: Label[];
   /** Notify parent when parsed meta changes (useful to import labels/setup) */
   onMetaChange?: (meta: GoMeta) => void;
+  /** Notify parent when SGF is loaded from internal toolbar */
+  onSgfTextChange?: (sgf: string) => void;
   /** Visualizza solo la board, senza toolbar né colonna destra */
   boardOnly?: boolean;
   /** SGF remoto da caricare automaticamente alla prima render */
@@ -78,6 +80,7 @@ export default function Goban({
   onBoardClick,
   labels,
   onMetaChange,
+  onSgfTextChange,
   boardOnly = false,
   preloadSgfUrl,
   guidedSequence,
@@ -111,6 +114,7 @@ export default function Goban({
 
   const handleOpenSgf = async (f: File) => {
     const text = await f.text();
+    onSgfTextChange?.(text);
     applySgfText(text); // ← niente replaceTree
   };
 
@@ -235,11 +239,7 @@ export default function Goban({
     const moves: MoveNode[] = [];
     let node = root.children[0];
     while (node) {
-      if (
-        node.row >= 0 &&
-        node.col >= 0 &&
-        (node.player === 1 || node.player === 2)
-      ) {
+      if (node.player === 1 || node.player === 2) {
         moves.push(node);
       }
       node = node.children[0];

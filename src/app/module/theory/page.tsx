@@ -38,6 +38,13 @@ const RULES: ReadonlyArray<Rule> = [
       'La regola del ko impedisce di ripetere subito una posizione precedente.',
     img: '/theory/capture.svg',
   },
+  {
+    id: 4,
+    title: 'Territorio',
+    description:
+      "Il territorio e' l'insieme dei punti vuoti controllati da un giocatore.",
+    img: '/theory/territory.svg',
+  },
 ];
 
 const LIBERTA_LINES = [
@@ -54,6 +61,11 @@ const KO_LINES = [
   'La regola del ko impedisce di ripetere subito la stessa posizione.',
   "Dopo una cattura, l'avversario non puo' ricatturare immediatamente nel punto del ko.",
   'Deve prima giocare altrove e può ricatturare solo alla mossa successiva.',
+];
+const TERRITORIO_LINES = [
+  "Il territorio e' formato dai punti vuoti circondati e protetti dalle tue pietre.",
+  'Per contare il punteggio somma i punti di territorio e le pietre catturate.',
+  'Le aree contese non sono territorio di nessuno.',
 ];
 
 const labelsFromMeta = (meta?: GoMeta): Label[] => {
@@ -100,6 +112,7 @@ export default function TheoryPage() {
   const isLibertaRule = activeRule.title === 'Libertà';
   const isCatturaRule = activeRule.title === 'Cattura';
   const isKoRule = activeRule.title === 'Ko';
+  const isTerritorioRule = activeRule.title === 'Territorio';
   const speechLines = useMemo(
     () =>
       isLibertaRule
@@ -108,8 +121,16 @@ export default function TheoryPage() {
           ? CATTURA_LINES
           : isKoRule
             ? KO_LINES
+            : isTerritorioRule
+              ? TERRITORIO_LINES
             : [activeRule.description],
-    [activeRule.description, isCatturaRule, isKoRule, isLibertaRule],
+    [
+      activeRule.description,
+      isCatturaRule,
+      isKoRule,
+      isLibertaRule,
+      isTerritorioRule,
+    ],
   );
   const [speechIndex, setSpeechIndex] = useState(0);
   const [labels, setLabels] = useState<Label[]>([]);
@@ -285,6 +306,19 @@ export default function TheoryPage() {
                         labels={labels}
                         onMetaChange={handleMetaChange}
                         preloadSgfUrl="/sgf/ko.sgf"
+                        loopPlayback={{ enabled: true, intervalMs: 2000 }}
+                      />
+                    </div>
+                  ) : isTerritorioRule ? (
+                    <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
+                      <Goban
+                        sgfMoves=""
+                        BOARD_SIZE={9}
+                        showMoveTree={false}
+                        boardOnly
+                        labels={labels}
+                        onMetaChange={handleMetaChange}
+                        preloadSgfUrl="/sgf/territorio.sgf"
                         loopPlayback={{ enabled: true, intervalMs: 2000 }}
                       />
                     </div>
