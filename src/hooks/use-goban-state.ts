@@ -182,7 +182,81 @@ export function useGobanState(
   };
 
   const handleIntersectionClick = (row: number, col: number) => {
-    if (koPoint && koPoint[0] === row && koPoint[1] === col) return;
+    const analyzeMove = (r: number, c: number) => {
+      if (
+        r < 0 ||
+        c < 0 ||
+        r >= boardSize ||
+        c >= boardSize ||
+        board[r][c] !== 0
+      )
+        return null;
+      const b = board.map((rowVals) => rowVals.slice());
+      const player = nextPlayer;
+      const opp = player === 1 ? 2 : 1;
+      b[r][c] = player;
+
+      const captured: Array<[number, number]> = [];
+      const visited = new Set<string>();
+      const dirs: [number, number][] = [
+        [-1, 0],
+        [1, 0],
+        [0, -1],
+        [0, 1],
+      ];
+
+      dirs.forEach(([dy, dx]) => {
+        const ny = r + dy;
+        const nx = c + dx;
+        if (
+          ny < 0 ||
+          ny >= boardSize ||
+          nx < 0 ||
+          nx >= boardSize ||
+          b[ny][nx] !== opp ||
+          visited.has(`${ny},${nx}`)
+        )
+          return;
+        const { chain, liberties } = getChainAndLiberties(
+          ny,
+          nx,
+          b,
+          boardSize,
+        );
+        if (liberties !== 0) return;
+        chain.forEach((p) => {
+          const [cr, cc] = p.split(',').map(Number);
+          b[cr][cc] = 0;
+          visited.add(p);
+          captured.push([cr, cc]);
+        });
+      });
+
+      let selfLiberties = 0;
+      try {
+        selfLiberties = getChainAndLiberties(r, c, b, boardSize).liberties;
+      } catch {
+        selfLiberties = 0;
+      }
+
+      return { captured, selfLiberties };
+    };
+
+    const analysis = analyzeMove(row, col);
+    if (!analysis) return;
+    const { captured, selfLiberties } = analysis;
+
+    if (captured.length === 0 && selfLiberties === 0) return;
+
+    if (koPoint && koPoint[0] === row && koPoint[1] === col) {
+      const isLastMoveCaptured =
+        captured.length === 1 &&
+        currentNode.row >= 0 &&
+        currentNode.col >= 0 &&
+        captured[0][0] === currentNode.row &&
+        captured[0][1] === currentNode.col;
+      if (isLastMoveCaptured) return;
+    }
     insertMoveNode(row, col);
   };
 
@@ -290,8 +364,15 @@ export function useGobanState(
 
       if (player === 1) prB += captured;
       else prW += captured;
-      if (idx === replay.length - 1 && captured === 1 && singleCaptured)
-        tmpKo = singleCaptured;
+      if (idx === replay.length - 1 && captured === 1 && singleCaptured) {
+        const { chain, liberties } = getChainAndLiberties(
+          row,
+          col,
+          b,
+          boardSize,
+        );
+        if (chain.size === 1 && liberties === 1) tmpKo = singleCaptured;
+      }
     });
 
     setBoard(b);
