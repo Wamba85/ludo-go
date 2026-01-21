@@ -48,8 +48,14 @@ const RULES: ReadonlyArray<Rule> = [
   {
     id: 5,
     title: 'Occhi',
+    description: "Una catena con due occhi veri non puo' essere catturata.",
+    img: '/theory/capture.svg',
+  },
+  {
+    id: 6,
+    title: 'Seki',
     description:
-      'Una catena con due occhi veri non puo\' essere catturata.',
+      "Il seki e' una vita reciproca: nessuno puo' catturare senza perdere il proprio gruppo.",
     img: '/theory/capture.svg',
   },
 ];
@@ -75,9 +81,14 @@ const TERRITORIO_LINES = [
   'Le aree contese non sono territorio di nessuno.',
 ];
 const OCCHI_LINES = [
-  'Un occhio e\' uno spazio vuoto interno circondato dalle tue pietre.',
-  'Con due occhi una catena non puo\' essere catturata.',
-  'Un solo occhio non basta: l\'avversario puo\' riempirlo.',
+  "Un occhio e' uno spazio vuoto interno circondato dalle tue pietre.",
+  "Con due occhi una catena non puo' essere catturata perché ci sono due punti che l'avversario non puo' occupare.",
+  "Attenzione gli occhi falsi! Alcuni spazi vuoti possono sembrare occhi ma in realta' non lo sono.",
+];
+const SEKI_LINES = [
+  "Il seki e' una vita reciproca: entrambe le catene rimangono in vita.",
+  'Se uno dei due gioca per catturare, perde il proprio gruppo.',
+  'I punti interni non sono territorio di nessuno.',
 ];
 
 const labelsFromMeta = (meta?: GoMeta): Label[] => {
@@ -126,6 +137,7 @@ export default function TheoryPage() {
   const isKoRule = activeRule.title === 'Ko';
   const isTerritorioRule = activeRule.title === 'Territorio';
   const isOcchiRule = activeRule.title === 'Occhi';
+  const isSekiRule = activeRule.title === 'Seki';
   const speechLines = useMemo(
     () =>
       isLibertaRule
@@ -138,7 +150,9 @@ export default function TheoryPage() {
               ? TERRITORIO_LINES
               : isOcchiRule
                 ? OCCHI_LINES
-              : [activeRule.description],
+                : isSekiRule
+                  ? SEKI_LINES
+                  : [activeRule.description],
     [
       activeRule.description,
       isCatturaRule,
@@ -146,6 +160,7 @@ export default function TheoryPage() {
       isLibertaRule,
       isTerritorioRule,
       isOcchiRule,
+      isSekiRule,
     ],
   );
   const [speechIndex, setSpeechIndex] = useState(0);
@@ -349,6 +364,18 @@ export default function TheoryPage() {
                         onMetaChange={handleMetaChange}
                         preloadSgfUrl="/sgf/occhi.sgf"
                         loopPlayback={{ enabled: true, intervalMs: 2000 }}
+                      />
+                    </div>
+                  ) : isSekiRule ? (
+                    <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
+                      <Goban
+                        sgfMoves=""
+                        BOARD_SIZE={9}
+                        showMoveTree={false}
+                        boardOnly
+                        labels={labels}
+                        onMetaChange={handleMetaChange}
+                        preloadSgfUrl="/sgf/seki.sgf"
                       />
                     </div>
                   ) : (

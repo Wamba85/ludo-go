@@ -50,10 +50,15 @@ export default function Dashboard() {
         {
           id: 4,
           title: 'Cattura 2',
-          status: 'active' as StepStatus,
+          status: 'done' as StepStatus,
           href: '/module/capture-2/exercises',
         },
-        { id: 5, title: 'In costruzione...', status: 'locked' as StepStatus },
+        {
+          id: 5,
+          title: 'Occhi',
+          status: 'active' as StepStatus,
+          href: '/module/occhi/exercises',
+        },
         { id: 6, title: 'In costruzione...', status: 'locked' as StepStatus },
       ] satisfies Step[],
     [],
