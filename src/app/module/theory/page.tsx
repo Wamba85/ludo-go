@@ -60,13 +60,20 @@ const RULES: ReadonlyArray<Rule> = [
   },
   {
     id: 7,
+    title: 'Occhio falso',
+    description:
+      'Un occhio falso sembra sicuro ma non garantisce la vita del gruppo.',
+    img: '/theory/capture.svg',
+  },
+  {
+    id: 8,
     title: 'Sente e gote',
     description:
       "Sente e' una mossa che costringe la risposta. In gote invece lasci l'iniziativa all'avversario.",
     img: '/theory/capture.svg',
   },
   {
-    id: 8,
+    id: 9,
     title: 'Joseki',
     description:
       'I joseki sono sequenze standard di apertura, equilibrate per entrambi i giocatori.',
@@ -103,6 +110,11 @@ const SEKI_LINES = [
   "Il seki e' una vita reciproca: entrambe le catene rimangono in vita.",
   'Se uno dei due gioca per catturare, perde il proprio gruppo.',
   'I punti interni non sono territorio di nessuno.',
+];
+const OCCHIO_FALSO_LINES = [
+  "Un occhio falso sembra un occhio, ma l'avversario può costringerlo a coprirlo.",
+  'Questo perché una delle catene del gruppo può essere messa in atari.',
+  'Cerca sempre di capire se un occhio si può falsificare.',
 ];
 const SENTE_GOTE_LINES = [
   "Sente e' una mossa che obbliga l'avversario a rispondere.",
@@ -162,6 +174,7 @@ export default function TheoryPage() {
   const isTerritorioRule = activeRule.title === 'Territorio';
   const isOcchiRule = activeRule.title === 'Occhi';
   const isSekiRule = activeRule.title === 'Seki';
+  const isOcchioFalsoRule = activeRule.title === 'Occhio falso';
   const isSenteGoteRule = activeRule.title === 'Sente e gote';
   const isJosekiRule = activeRule.title === 'Joseki';
   const speechLines = useMemo(
@@ -178,11 +191,13 @@ export default function TheoryPage() {
                 ? OCCHI_LINES
                 : isSekiRule
                   ? SEKI_LINES
-                  : isSenteGoteRule
-                    ? SENTE_GOTE_LINES
-                    : isJosekiRule
-                      ? JOSEKI_LINES
-                      : [activeRule.description],
+                  : isOcchioFalsoRule
+                    ? OCCHIO_FALSO_LINES
+                    : isSenteGoteRule
+                      ? SENTE_GOTE_LINES
+                      : isJosekiRule
+                        ? JOSEKI_LINES
+                        : [activeRule.description],
     [
       activeRule.description,
       isCatturaRule,
@@ -191,6 +206,7 @@ export default function TheoryPage() {
       isTerritorioRule,
       isOcchiRule,
       isSekiRule,
+      isOcchioFalsoRule,
       isSenteGoteRule,
       isJosekiRule,
     ],
@@ -408,6 +424,18 @@ export default function TheoryPage() {
                         labels={labels}
                         onMetaChange={handleMetaChange}
                         preloadSgfUrl="/sgf/seki.sgf"
+                      />
+                    </div>
+                  ) : isOcchioFalsoRule ? (
+                    <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
+                      <Goban
+                        sgfMoves=""
+                        BOARD_SIZE={9}
+                        showMoveTree={false}
+                        boardOnly
+                        labels={labels}
+                        onMetaChange={handleMetaChange}
+                        preloadSgfUrl="/sgf/occhio%20falso.sgf"
                       />
                     </div>
                   ) : isSenteGoteRule ? (
