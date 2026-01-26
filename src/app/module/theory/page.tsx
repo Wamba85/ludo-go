@@ -58,6 +58,20 @@ const RULES: ReadonlyArray<Rule> = [
       "Il seki e' una vita reciproca: nessuno puo' catturare senza perdere il proprio gruppo.",
     img: '/theory/capture.svg',
   },
+  {
+    id: 7,
+    title: 'Sente e gote',
+    description:
+      "Sente e' una mossa che costringe la risposta. In gote invece lasci l'iniziativa all'avversario.",
+    img: '/theory/capture.svg',
+  },
+  {
+    id: 8,
+    title: 'Joseki',
+    description:
+      'I joseki sono sequenze standard di apertura, equilibrate per entrambi i giocatori.',
+    img: '/theory/capture.svg',
+  },
 ];
 
 const LIBERTA_LINES = [
@@ -89,6 +103,16 @@ const SEKI_LINES = [
   "Il seki e' una vita reciproca: entrambe le catene rimangono in vita.",
   'Se uno dei due gioca per catturare, perde il proprio gruppo.',
   'I punti interni non sono territorio di nessuno.',
+];
+const SENTE_GOTE_LINES = [
+  "Sente e' una mossa che obbliga l'avversario a rispondere.",
+  "Finche' resti in sente, hai l'iniziativa e scegli il ritmo della partita.",
+  "Con una mossa gote non richiede di essere risposta. L'iniziativa passa all'avversario.",
+];
+const JOSEKI_LINES = [
+  'I joseki sono sequenze di apertura standard ed equilibrate.',
+  'Dipendono però anche dalla situazione circostante.',
+  'I joseki possono avere molte varianti anche complesse.',
 ];
 
 const labelsFromMeta = (meta?: GoMeta): Label[] => {
@@ -138,6 +162,8 @@ export default function TheoryPage() {
   const isTerritorioRule = activeRule.title === 'Territorio';
   const isOcchiRule = activeRule.title === 'Occhi';
   const isSekiRule = activeRule.title === 'Seki';
+  const isSenteGoteRule = activeRule.title === 'Sente e gote';
+  const isJosekiRule = activeRule.title === 'Joseki';
   const speechLines = useMemo(
     () =>
       isLibertaRule
@@ -152,7 +178,11 @@ export default function TheoryPage() {
                 ? OCCHI_LINES
                 : isSekiRule
                   ? SEKI_LINES
-                  : [activeRule.description],
+                  : isSenteGoteRule
+                    ? SENTE_GOTE_LINES
+                    : isJosekiRule
+                      ? JOSEKI_LINES
+                      : [activeRule.description],
     [
       activeRule.description,
       isCatturaRule,
@@ -161,6 +191,8 @@ export default function TheoryPage() {
       isTerritorioRule,
       isOcchiRule,
       isSekiRule,
+      isSenteGoteRule,
+      isJosekiRule,
     ],
   );
   const [speechIndex, setSpeechIndex] = useState(0);
@@ -221,7 +253,7 @@ export default function TheoryPage() {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Regole Base del Go"
+          aria-label="Regole Base del Go e teoria"
           className="w-full max-w-5xl rounded-[32px] border border-emerald-100/80 bg-white/95 p-6 shadow-2xl shadow-emerald-200/50 backdrop-blur"
         >
           <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -230,7 +262,7 @@ export default function TheoryPage() {
                 Teoria
               </span>
               <h1 className="text-2xl font-semibold sm:text-3xl">
-                Regole Base del Go
+                Regole Base del Go e teoria
               </h1>
             </div>
             <Link
@@ -376,6 +408,32 @@ export default function TheoryPage() {
                         labels={labels}
                         onMetaChange={handleMetaChange}
                         preloadSgfUrl="/sgf/seki.sgf"
+                      />
+                    </div>
+                  ) : isSenteGoteRule ? (
+                    <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
+                      <Goban
+                        sgfMoves=""
+                        BOARD_SIZE={13}
+                        showMoveTree={false}
+                        boardOnly
+                        labels={labels}
+                        onMetaChange={handleMetaChange}
+                        preloadSgfUrl="/sgf/sente%20e%20gote.sgf"
+                        loopPlayback={{ enabled: true, intervalMs: 1800 }}
+                      />
+                    </div>
+                  ) : isJosekiRule ? (
+                    <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
+                      <Goban
+                        sgfMoves=""
+                        BOARD_SIZE={13}
+                        showMoveTree={false}
+                        boardOnly
+                        labels={labels}
+                        onMetaChange={handleMetaChange}
+                        preloadSgfUrl="/sgf/joseki.sgf"
+                        loopPlayback={{ enabled: true, intervalMs: 1400 }}
                       />
                     </div>
                   ) : (
