@@ -60,20 +60,27 @@ const RULES: ReadonlyArray<Rule> = [
   },
   {
     id: 7,
+    title: 'Punto vitale',
+    description:
+      'Il punto vitale è la mossa chiave per vivere o uccidere un gruppo.',
+    img: '/theory/capture.svg',
+  },
+  {
+    id: 8,
     title: 'Occhio falso',
     description:
       'Un occhio falso sembra sicuro ma non garantisce la vita del gruppo.',
     img: '/theory/capture.svg',
   },
   {
-    id: 8,
+    id: 9,
     title: 'Sente e gote',
     description:
       "Sente e' una mossa che costringe la risposta. In gote invece lasci l'iniziativa all'avversario.",
     img: '/theory/capture.svg',
   },
   {
-    id: 9,
+    id: 10,
     title: 'Joseki',
     description:
       'I joseki sono sequenze standard di apertura, equilibrate per entrambi i giocatori.',
@@ -110,6 +117,11 @@ const SEKI_LINES = [
   "Il seki e' una vita reciproca: entrambe le catene rimangono in vita.",
   'Se uno dei due gioca per catturare, perde il proprio gruppo.',
   'I punti interni non sono territorio di nessuno.',
+];
+const PUNTO_VITALE_LINES = [
+  'Il punto vitale è il punto che decide la vita o la morte di un gruppo.',
+  'Individuarlo richiede lettura e conoscenza delle forme.',
+  'Un gruppo può avere più punti vitali. Se un gruppo ha due o più punti vitali non fare nulla: è vivo!',
 ];
 const OCCHIO_FALSO_LINES = [
   "Un occhio falso sembra un occhio, ma l'avversario può costringerlo a coprirlo.",
@@ -174,6 +186,7 @@ export default function TheoryPage() {
   const isTerritorioRule = activeRule.title === 'Territorio';
   const isOcchiRule = activeRule.title === 'Occhi';
   const isSekiRule = activeRule.title === 'Seki';
+  const isPuntoVitaleRule = activeRule.title === 'Punto vitale';
   const isOcchioFalsoRule = activeRule.title === 'Occhio falso';
   const isSenteGoteRule = activeRule.title === 'Sente e gote';
   const isJosekiRule = activeRule.title === 'Joseki';
@@ -191,13 +204,15 @@ export default function TheoryPage() {
                 ? OCCHI_LINES
                 : isSekiRule
                   ? SEKI_LINES
-                  : isOcchioFalsoRule
-                    ? OCCHIO_FALSO_LINES
-                    : isSenteGoteRule
-                      ? SENTE_GOTE_LINES
-                      : isJosekiRule
-                        ? JOSEKI_LINES
-                        : [activeRule.description],
+                  : isPuntoVitaleRule
+                    ? PUNTO_VITALE_LINES
+                    : isOcchioFalsoRule
+                      ? OCCHIO_FALSO_LINES
+                      : isSenteGoteRule
+                        ? SENTE_GOTE_LINES
+                        : isJosekiRule
+                          ? JOSEKI_LINES
+                          : [activeRule.description],
     [
       activeRule.description,
       isCatturaRule,
@@ -206,6 +221,7 @@ export default function TheoryPage() {
       isTerritorioRule,
       isOcchiRule,
       isSekiRule,
+      isPuntoVitaleRule,
       isOcchioFalsoRule,
       isSenteGoteRule,
       isJosekiRule,
@@ -424,6 +440,18 @@ export default function TheoryPage() {
                         labels={labels}
                         onMetaChange={handleMetaChange}
                         preloadSgfUrl="/sgf/seki.sgf"
+                      />
+                    </div>
+                  ) : isPuntoVitaleRule ? (
+                    <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
+                      <Goban
+                        sgfMoves=""
+                        BOARD_SIZE={19}
+                        showMoveTree={false}
+                        boardOnly
+                        labels={labels}
+                        onMetaChange={handleMetaChange}
+                        preloadSgfUrl="/sgf/punto%20vitale.sgf"
                       />
                     </div>
                   ) : isOcchioFalsoRule ? (
