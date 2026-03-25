@@ -100,6 +100,13 @@ const RULES: ReadonlyArray<Rule> = [
       "La scala e' una sequenza di atari in cui il gruppo in fuga corre finche' viene catturato o trova aiuto.",
     img: '/theory/capture.svg',
   },
+  {
+    id: 13,
+    title: 'Rete',
+    description:
+      "La rete e' una tecnica di cattura in cui chiudi una o piu' pietre in una maglia aperta, bloccando ogni fuga.",
+    img: '/theory/capture.svg',
+  },
 ];
 
 const LIBERTA_LINES = [
@@ -159,8 +166,13 @@ const SNAPBACK_LINES = [
 ];
 const SCALA_LINES = [
   "La scala e' una sequenza di atari: attacchi, l'avversario scappa e guadagna una sola liberta' alla volta.",
-  "Se non trova aiuto, la fuga continua a zig-zag sul goban fino alla cattura.",
+  'Se non trova aiuto, la fuga continua a zig-zag sul goban fino alla cattura.',
   "Il rompi scala e' una pietra gia' presente sul percorso che spezza la sequenza e salva il gruppo in fuga.",
+];
+const RETE_LINES = [
+  "La rete, o geta, cattura una o piu' pietre circondandole con una maglia che sembra aperta.",
+  "Anche se ci sono dei buchi, ogni via di fuga puo' essere chiusa dalla mossa successiva dell'attaccante.",
+  "Il nido di gru (a destra) e' un tesuji classico di rete: una forma elegante per imprigionare le pietre in fuga.",
 ];
 
 const labelsFromMeta = (meta?: GoMeta): Label[] => {
@@ -216,6 +228,7 @@ export default function TheoryPage() {
   const isJosekiRule = activeRule.title === 'Joseki';
   const isSnapbackRule = activeRule.title === 'Snapback';
   const isScalaRule = activeRule.title === 'Scala';
+  const isReteRule = activeRule.title === 'Rete';
   const speechLines = useMemo(
     () =>
       isLibertaRule
@@ -242,7 +255,9 @@ export default function TheoryPage() {
                             ? SNAPBACK_LINES
                             : isScalaRule
                               ? SCALA_LINES
-                            : [activeRule.description],
+                              : isReteRule
+                                ? RETE_LINES
+                                : [activeRule.description],
     [
       activeRule.description,
       isCatturaRule,
@@ -257,6 +272,7 @@ export default function TheoryPage() {
       isJosekiRule,
       isSnapbackRule,
       isScalaRule,
+      isReteRule,
     ],
   );
   const [speechIndex, setSpeechIndex] = useState(0);
@@ -547,6 +563,19 @@ export default function TheoryPage() {
                         labels={labels}
                         onMetaChange={handleMetaChange}
                         preloadSgfUrl="/sgf/scala.sgf"
+                        loopPlayback={{ enabled: true, intervalMs: 1400 }}
+                      />
+                    </div>
+                  ) : isReteRule ? (
+                    <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
+                      <Goban
+                        sgfMoves=""
+                        BOARD_SIZE={13}
+                        showMoveTree={false}
+                        boardOnly
+                        labels={labels}
+                        onMetaChange={handleMetaChange}
+                        preloadSgfUrl="/sgf/rete.sgf"
                         loopPlayback={{ enabled: true, intervalMs: 1400 }}
                       />
                     </div>
