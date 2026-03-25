@@ -86,6 +86,20 @@ const RULES: ReadonlyArray<Rule> = [
       'I joseki sono sequenze standard di apertura, equilibrate per entrambi i giocatori.',
     img: '/theory/capture.svg',
   },
+  {
+    id: 11,
+    title: 'Snapback',
+    description:
+      "Lo snapback e' una tattica in cui sacrifichi una pietra per essere catturato e ricatturare subito di piu'.",
+    img: '/theory/capture.svg',
+  },
+  {
+    id: 12,
+    title: 'Scala',
+    description:
+      "La scala e' una sequenza di atari in cui il gruppo in fuga corre finche' viene catturato o trova aiuto.",
+    img: '/theory/capture.svg',
+  },
 ];
 
 const LIBERTA_LINES = [
@@ -137,6 +151,16 @@ const JOSEKI_LINES = [
   'I joseki sono sequenze di apertura standard ed equilibrate.',
   'Dipendono però anche dalla situazione circostante.',
   'I joseki possono avere molte varianti anche complesse.',
+];
+const SNAPBACK_LINES = [
+  "Lo snapback e' una tattica in cui giochi una pietra sapendo che verra' catturata.",
+  "Quando l'avversario la prende, il suo gruppo resta con una sola liberta'.",
+  "A quel punto ricatturi subito e prendi piu' pietre di quante ne hai sacrificate.",
+];
+const SCALA_LINES = [
+  "La scala e' una sequenza di atari: attacchi, l'avversario scappa e guadagna una sola liberta' alla volta.",
+  "Se non trova aiuto, la fuga continua a zig-zag sul goban fino alla cattura.",
+  "Il rompi scala e' una pietra gia' presente sul percorso che spezza la sequenza e salva il gruppo in fuga.",
 ];
 
 const labelsFromMeta = (meta?: GoMeta): Label[] => {
@@ -190,6 +214,8 @@ export default function TheoryPage() {
   const isOcchioFalsoRule = activeRule.title === 'Occhio falso';
   const isSenteGoteRule = activeRule.title === 'Sente e gote';
   const isJosekiRule = activeRule.title === 'Joseki';
+  const isSnapbackRule = activeRule.title === 'Snapback';
+  const isScalaRule = activeRule.title === 'Scala';
   const speechLines = useMemo(
     () =>
       isLibertaRule
@@ -212,7 +238,11 @@ export default function TheoryPage() {
                         ? SENTE_GOTE_LINES
                         : isJosekiRule
                           ? JOSEKI_LINES
-                          : [activeRule.description],
+                          : isSnapbackRule
+                            ? SNAPBACK_LINES
+                            : isScalaRule
+                              ? SCALA_LINES
+                            : [activeRule.description],
     [
       activeRule.description,
       isCatturaRule,
@@ -225,6 +255,8 @@ export default function TheoryPage() {
       isOcchioFalsoRule,
       isSenteGoteRule,
       isJosekiRule,
+      isSnapbackRule,
+      isScalaRule,
     ],
   );
   const [speechIndex, setSpeechIndex] = useState(0);
@@ -489,6 +521,32 @@ export default function TheoryPage() {
                         labels={labels}
                         onMetaChange={handleMetaChange}
                         preloadSgfUrl="/sgf/joseki.sgf"
+                        loopPlayback={{ enabled: true, intervalMs: 1400 }}
+                      />
+                    </div>
+                  ) : isSnapbackRule ? (
+                    <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
+                      <Goban
+                        sgfMoves=""
+                        BOARD_SIZE={9}
+                        showMoveTree={false}
+                        boardOnly
+                        labels={labels}
+                        onMetaChange={handleMetaChange}
+                        preloadSgfUrl="/sgf/snapback.sgf"
+                        loopPlayback={{ enabled: true, intervalMs: 2500 }}
+                      />
+                    </div>
+                  ) : isScalaRule ? (
+                    <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
+                      <Goban
+                        sgfMoves=""
+                        BOARD_SIZE={13}
+                        showMoveTree={false}
+                        boardOnly
+                        labels={labels}
+                        onMetaChange={handleMetaChange}
+                        preloadSgfUrl="/sgf/scala.sgf"
                         loopPlayback={{ enabled: true, intervalMs: 1400 }}
                       />
                     </div>
