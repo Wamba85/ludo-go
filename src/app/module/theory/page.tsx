@@ -107,6 +107,46 @@ const RULES: ReadonlyArray<Rule> = [
       "La rete e' una tecnica di cattura in cui chiudi una o piu' pietre in una maglia aperta, bloccando ogni fuga.",
     img: '/theory/capture.svg',
   },
+  {
+    id: 14,
+    title: "Schrodinger's Seki",
+    description:
+      "Uno seki paradossale: la forma sembra morta, ma nessuno puo' chiuderla senza perdere il proprio gruppo.",
+    img: '/theory/capture.svg',
+  },
+  {
+    id: 15,
+    title: 'Basic Tenuki Joseki',
+    description:
+      'Una variante di joseki in cui entrambi i giocatori fanno tenuki, lasciando il seguito locale per giocare altrove.',
+    img: '/theory/capture.svg',
+  },
+  {
+    id: 16,
+    title: 'Persistent Eye Tesuji',
+    description: 'Un tesuji per far vivere un gruppo con un solo occhio.',
+    img: '/theory/capture.svg',
+  },
+  {
+    id: 17,
+    title: 'Nuclear Tesuji',
+    description:
+      'Un modo elegante di perdere la calma e rovinare partita, avversario e club.',
+    img: '/nuclear%20tesuji.jpeg',
+  },
+  {
+    id: 18,
+    title: 'B2 Bomber',
+    description:
+      "Una forma esplosiva che oggi compare soprattutto nei combattimenti complessi e puo' cambiare il ritmo dell'intera partita.",
+    img: '/b2bomber.jpg',
+  },
+  {
+    id: 19,
+    title: 'Consigli di lettura',
+    description: 'Tre letture per migliorare le tue abilità di Go.',
+    img: '/Get%20Strong%20at%20Gote.png',
+  },
 ];
 
 const LIBERTA_LINES = [
@@ -139,6 +179,48 @@ const SEKI_LINES = [
   'Se uno dei due gioca per catturare, perde il proprio gruppo.',
   'I punti interni non sono territorio di nessuno.',
 ];
+const SCHRODINGER_SEKI_LINES = [
+  "Ti presento lo Schrodinger's Seki: un gatto di pietre che sembra spacciato, ma non lo e'.",
+  "A prima vista pare morto, pero' questa forma e' seki: nessuno puo' davvero chiuderla senza perdere il proprio gruppo.",
+  "E' il paradosso perfetto del Go: il gatto sembra vivo e morto insieme finche' non provi a giocare dentro.",
+];
+const BASIC_TENUKI_JOSEKI_LINES = [
+  'Nel Basic Tenuki Joseki, nero e bianco fanno entrambi tenuki: invece di continuare localmente, giocano altrove.',
+];
+const PERSISTENT_EYE_TESUJI_LINES = [
+  "Quando capisci che un tuo gruppo riuscira' ad avere un solo occhio, puoi ricorrere al Persistent Eye Tesuji.",
+  "Appena l'occhio nasce, prendi il trapano e fai un buco nel goban abbastanza grande da farci cadere dentro una pietra.",
+  "Cosi' se l'avversario prova a catturare quel gruppo, finisce per perdere la propria pietra; ma attenzione, una liberta' persistente puo' aiutare anche l'altro a salvare un gruppo piu' grande.",
+];
+const NUCLEAR_TESUJI_LINES = [
+  'Il Nuclear Tesuji consiste nel lanciare il goban contro il muro e trasformare la sala in caos.',
+  'Fra pietre che volano, rumore e rabbia, non si rovina solo la partita: si rischiano ferite serie e si interrompono anche tutte le altre partite del club.',
+  "Il risultato e' sempre disastroso: un avversario in pericolo, meno goban disponibili e una sala meno accogliente per tutti.",
+];
+const B2_BOMBER_LINES = [
+  "Per anni il B2 Bomber e' stato usato come forma di chiusura, soprattutto dentro certi tenuki joseki, ma oggi si vede molto meno.",
+  "Nell'analisi moderna nessuno regala volentieri questa forma all'avversario: quando compare in un combattimento complicato, puo' cambiare il tempo di tutta la partita.",
+  "Contiene addirittura due triangoli vuoti, irradia cosi' poca influenza che quasi sparisce dal radar nemico.",
+];
+const CONSIGLI_DI_LETTURA_LINES = [
+  "Se vuoi allenare l'istinto per il ritmo peggiore possibile, parti da Get Strong at Gote: una lettura perfetta per imparare quando cedere l'iniziativa con stile.",
+  'Poi passa a Get Strong at Humiliating Debutants, il manuale perfetto per mettere al proprio posto i novellini.',
+  "Infine c'e' Get Strong at Inventing Go Proverbs, per quando le varianti non bastano piu' e senti il bisogno di spiegare tutto con un proverbio appena inventato.",
+];
+const CONSIGLI_DI_LETTURA_BOOKS = [
+  {
+    title: 'Get Strong at Gote',
+    src: '/Get%20Strong%20at%20Gote.png',
+  },
+  {
+    title: 'Get Strong at Humiliating Debutants',
+    src: '/Get%20Strong%20at%20Humiliating%20Debutants.png',
+  },
+  {
+    title: 'Get Strong at Inventing Go Proverbs',
+    src: '/Get%20Strong%20at%20Inventing%20Go%20Proverbs.png',
+  },
+] as const;
 const PUNTO_VITALE_LINES = [
   'Il punto vitale è il punto che decide la vita o la morte di un gruppo.',
   'Individuarlo richiede lettura e conoscenza delle forme.',
@@ -222,6 +304,13 @@ export default function TheoryPage() {
   const isTerritorioRule = activeRule.title === 'Territorio';
   const isOcchiRule = activeRule.title === 'Occhi';
   const isSekiRule = activeRule.title === 'Seki';
+  const isSchrodingerSekiRule = activeRule.title === "Schrodinger's Seki";
+  const isBasicTenukiJosekiRule = activeRule.title === 'Basic Tenuki Joseki';
+  const isPersistentEyeTesujiRule =
+    activeRule.title === 'Persistent Eye Tesuji';
+  const isNuclearTesujiRule = activeRule.title === 'Nuclear Tesuji';
+  const isB2BomberRule = activeRule.title === 'B2 Bomber';
+  const isConsigliLetturaRule = activeRule.title === 'Consigli di lettura';
   const isPuntoVitaleRule = activeRule.title === 'Punto vitale';
   const isOcchioFalsoRule = activeRule.title === 'Occhio falso';
   const isSenteGoteRule = activeRule.title === 'Sente e gote';
@@ -243,21 +332,33 @@ export default function TheoryPage() {
                 ? OCCHI_LINES
                 : isSekiRule
                   ? SEKI_LINES
-                  : isPuntoVitaleRule
-                    ? PUNTO_VITALE_LINES
-                    : isOcchioFalsoRule
-                      ? OCCHIO_FALSO_LINES
-                      : isSenteGoteRule
-                        ? SENTE_GOTE_LINES
-                        : isJosekiRule
-                          ? JOSEKI_LINES
-                          : isSnapbackRule
-                            ? SNAPBACK_LINES
-                            : isScalaRule
-                              ? SCALA_LINES
-                              : isReteRule
-                                ? RETE_LINES
-                                : [activeRule.description],
+                  : isSchrodingerSekiRule
+                    ? SCHRODINGER_SEKI_LINES
+                    : isBasicTenukiJosekiRule
+                      ? BASIC_TENUKI_JOSEKI_LINES
+                      : isPersistentEyeTesujiRule
+                        ? PERSISTENT_EYE_TESUJI_LINES
+                        : isNuclearTesujiRule
+                          ? NUCLEAR_TESUJI_LINES
+                          : isB2BomberRule
+                            ? B2_BOMBER_LINES
+                            : isConsigliLetturaRule
+                              ? CONSIGLI_DI_LETTURA_LINES
+                              : isPuntoVitaleRule
+                                ? PUNTO_VITALE_LINES
+                                : isOcchioFalsoRule
+                                  ? OCCHIO_FALSO_LINES
+                                  : isSenteGoteRule
+                                    ? SENTE_GOTE_LINES
+                                    : isJosekiRule
+                                      ? JOSEKI_LINES
+                                      : isSnapbackRule
+                                        ? SNAPBACK_LINES
+                                        : isScalaRule
+                                          ? SCALA_LINES
+                                          : isReteRule
+                                            ? RETE_LINES
+                                            : [activeRule.description],
     [
       activeRule.description,
       isCatturaRule,
@@ -266,6 +367,12 @@ export default function TheoryPage() {
       isTerritorioRule,
       isOcchiRule,
       isSekiRule,
+      isSchrodingerSekiRule,
+      isBasicTenukiJosekiRule,
+      isPersistentEyeTesujiRule,
+      isNuclearTesujiRule,
+      isB2BomberRule,
+      isConsigliLetturaRule,
       isPuntoVitaleRule,
       isOcchioFalsoRule,
       isSenteGoteRule,
@@ -279,6 +386,8 @@ export default function TheoryPage() {
   const [labels, setLabels] = useState<Label[]>([]);
   const [speechId, setSpeechId] = useState(0);
   const [speechText, setSpeechText] = useState<string | null>(null);
+  const currentReadingBook =
+    CONSIGLI_DI_LETTURA_BOOKS[speechIndex] ?? CONSIGLI_DI_LETTURA_BOOKS[0];
 
   const handleMetaChange = useCallback((meta: GoMeta) => {
     setLabels(labelsFromMeta(meta));
@@ -489,6 +598,124 @@ export default function TheoryPage() {
                         onMetaChange={handleMetaChange}
                         preloadSgfUrl="/sgf/seki.sgf"
                       />
+                    </div>
+                  ) : isSchrodingerSekiRule ? (
+                    <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
+                      <Goban
+                        sgfMoves=""
+                        BOARD_SIZE={19}
+                        showMoveTree={false}
+                        boardOnly
+                        labels={labels}
+                        onMetaChange={handleMetaChange}
+                        preloadSgfUrl="/sgf/schrodinger%20seki.sgf"
+                      />
+                    </div>
+                  ) : isBasicTenukiJosekiRule ? (
+                    <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
+                      <Goban
+                        sgfMoves=""
+                        BOARD_SIZE={19}
+                        showMoveTree={false}
+                        boardOnly
+                        labels={labels}
+                        onMetaChange={handleMetaChange}
+                        preloadSgfUrl="/sgf/basic%20tenuki%20joseki.sgf"
+                      />
+                    </div>
+                  ) : isPersistentEyeTesujiRule ? (
+                    <div className="space-y-4">
+                      <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
+                        <Goban
+                          sgfMoves=""
+                          BOARD_SIZE={9}
+                          showMoveTree={false}
+                          boardOnly
+                          labels={labels}
+                          onMetaChange={handleMetaChange}
+                          preloadSgfUrl="/sgf/Persistent%20Eye%20Tesuji.sgf"
+                        />
+                      </div>
+                      <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
+                        <div className="relative mx-auto aspect-[4/3] w-full max-w-sm overflow-hidden rounded-xl">
+                          <Image
+                            src="/trapano.webp"
+                            alt="Trapano"
+                            fill
+                            className="object-contain"
+                            sizes="(min-width: 1024px) 320px, 100vw"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : isNuclearTesujiRule ? (
+                    <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
+                      <div className="relative mx-auto aspect-[4/3] w-full max-w-2xl overflow-hidden rounded-xl">
+                        <Image
+                          src="/nuclear%20tesuji.jpeg"
+                          alt="Nuclear Tesuji"
+                          fill
+                          className="object-contain"
+                          sizes="(min-width: 1024px) 640px, 100vw"
+                        />
+                      </div>
+                    </div>
+                  ) : isB2BomberRule ? (
+                    <div className="space-y-4">
+                      <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
+                        <Goban
+                          sgfMoves=""
+                          BOARD_SIZE={9}
+                          showMoveTree={false}
+                          boardOnly
+                          labels={labels}
+                          onMetaChange={handleMetaChange}
+                          preloadSgfUrl="/sgf/b2bomber.sgf"
+                        />
+                      </div>
+                      <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
+                        <div className="relative mx-auto aspect-[4/3] w-full max-w-sm overflow-hidden rounded-xl">
+                          <Image
+                            src="/b2bomber.jpg"
+                            alt="B2 Bomber"
+                            fill
+                            className="object-contain"
+                            sizes="(min-width: 1024px) 320px, 100vw"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : isConsigliLetturaRule ? (
+                    <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-center">
+                          <span className="rounded-full bg-emerald-100 px-4 py-1 text-sm font-semibold text-emerald-700">
+                            {currentReadingBook.title}
+                          </span>
+                        </div>
+                        <div className="relative mx-auto aspect-[3/4] w-full max-w-sm overflow-hidden rounded-xl">
+                          <Image
+                            src={currentReadingBook.src}
+                            alt={currentReadingBook.title}
+                            fill
+                            className="object-contain"
+                            sizes="(min-width: 1024px) 320px, 100vw"
+                          />
+                        </div>
+                        <div className="flex items-center justify-center gap-2">
+                          {CONSIGLI_DI_LETTURA_BOOKS.map((book, index) => (
+                            <span
+                              key={book.title}
+                              className={`h-2.5 w-2.5 rounded-full ${
+                                index === speechIndex
+                                  ? 'bg-emerald-500'
+                                  : 'bg-emerald-100'
+                              }`}
+                              aria-hidden="true"
+                            />
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   ) : isPuntoVitaleRule ? (
                     <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
