@@ -7,10 +7,13 @@ import { useEffect, useRef, useState } from 'react';
 type MascotIdleProps = {
   className?: string;
   bubbleMaxWidthClass?: string;
+  bubbleClassName?: string;
+  speechTextClassName?: string;
   speechId?: number;
   speechText?: string | null;
   persistSpeech?: boolean;
   speechControls?: ReactNode;
+  onSpeechComplete?: () => void;
 };
 
 const MIN_SPEAK_MS = 2000;
@@ -20,10 +23,13 @@ const MS_PER_CHAR = 80;
 export default function MascotIdle({
   className = '',
   bubbleMaxWidthClass = 'max-w-[220px]',
+  bubbleClassName = '',
+  speechTextClassName = '',
   speechId,
   speechText,
   persistSpeech = false,
   speechControls,
+  onSpeechComplete,
 }: MascotIdleProps) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [bubbleText, setBubbleText] = useState<string | null>(null);
@@ -55,6 +61,7 @@ export default function MascotIdle({
       if (!persistSpeech) {
         setBubbleText(null);
       }
+      onSpeechComplete?.();
     }, durationMs);
 
     return () => {
@@ -62,7 +69,7 @@ export default function MascotIdle({
         window.clearTimeout(timerRef.current);
       }
     };
-  }, [persistSpeech, speechId, speechText]);
+  }, [onSpeechComplete, persistSpeech, speechId, speechText]);
 
   useEffect(
     () => () => {
@@ -89,11 +96,11 @@ export default function MascotIdle({
         {bubbleText ? (
           <div className="absolute left-full top-[45%] ml-3 -translate-y-1/2">
             <div
-              className={`relative ${bubbleMaxWidthClass} rounded-2xl border border-stone-900 bg-white px-4 py-2 text-sm font-medium text-stone-700 shadow-sm shadow-emerald-100`}
+              className={`relative ${bubbleMaxWidthClass} rounded-2xl border border-stone-900 bg-white px-4 py-2 text-sm font-medium text-stone-700 shadow-sm shadow-emerald-100 ${bubbleClassName}`.trim()}
             >
               <span className="absolute -left-1 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-l border-stone-900 bg-white" />
               <div className={speechControls ? 'space-y-2' : undefined}>
-                <p>{bubbleText}</p>
+                <p className={speechTextClassName || undefined}>{bubbleText}</p>
                 {speechControls ? (
                   <div className="flex items-center justify-end gap-2">
                     {speechControls}

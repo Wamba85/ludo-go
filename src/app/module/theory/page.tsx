@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { GoMeta } from '@/lib/sgf/go-semantic';
 import type { Label, LabelKind } from '@/types/goban';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 type Rule = {
   id: number;
@@ -149,6 +149,15 @@ const RULES: ReadonlyArray<Rule> = [
   },
 ];
 
+const RETIRING_RULE_START_ID = 14;
+const RETIRING_RULE_STAGGER_MS = 90;
+const RETIRING_MASCOT_DELAY_MS = 1800;
+const RETIRING_MASCOT_EXIT_MS = 700;
+const RETIRING_RULE_EXIT_MS = 700;
+const RETIRING_RULE_COUNT = RULES.filter(
+  (rule) => rule.id >= RETIRING_RULE_START_ID,
+).length;
+
 const LIBERTA_LINES = [
   'Ogni pietra ha libertà pari agli spazi vuoti ortogonali ad essa.',
   'Gli spazi vuoti diagonali non contano come libertà.',
@@ -206,6 +215,7 @@ const CONSIGLI_DI_LETTURA_LINES = [
   "Se vuoi allenare l'istinto per il ritmo peggiore possibile, parti da Get Strong at Gote: una lettura perfetta per imparare quando cedere l'iniziativa con stile.",
   'Poi passa a Get Strong at Humiliating Debutants, il manuale perfetto per mettere al proprio posto i novellini.',
   "Infine c'e' Get Strong at Inventing Go Proverbs, per quando le varianti non bastano piu' e senti il bisogno di spiegare tutto con un proverbio appena inventato.",
+  'Adesso basta con queste cavolate, mi licenzio',
 ];
 const CONSIGLI_DI_LETTURA_BOOKS = [
   {
@@ -294,6 +304,16 @@ const labelsFromMeta = (meta?: GoMeta): Label[] => {
 
 export default function TheoryPage() {
   const [activeRuleId, setActiveRuleId] = useState<Rule['id']>(RULES[0].id);
+  const [speechIndex, setSpeechIndex] = useState(0);
+  const [labels, setLabels] = useState<Label[]>([]);
+  const [speechId, setSpeechId] = useState(0);
+  const [speechText, setSpeechText] = useState<string | null>(null);
+  const [isReadingFinaleTriggered, setIsReadingFinaleTriggered] =
+    useState(false);
+  const [isMascotVisible, setIsMascotVisible] = useState(true);
+  const [areLateRulesHiding, setAreLateRulesHiding] = useState(false);
+  const [areLateRulesHidden, setAreLateRulesHidden] = useState(false);
+  const retirementTimersRef = useRef<number[]>([]);
   const activeRule = useMemo(
     () => RULES.find((rule) => rule.id === activeRuleId) ?? RULES[0],
     [activeRuleId],
@@ -318,6 +338,9 @@ export default function TheoryPage() {
   const isSnapbackRule = activeRule.title === 'Snapback';
   const isScalaRule = activeRule.title === 'Scala';
   const isReteRule = activeRule.title === 'Rete';
+  const isReadingQuitLine =
+    isConsigliLetturaRule &&
+    speechIndex === CONSIGLI_DI_LETTURA_LINES.length - 1;
   const speechLines = useMemo(
     () =>
       isLibertaRule
@@ -382,16 +405,21 @@ export default function TheoryPage() {
       isReteRule,
     ],
   );
-  const [speechIndex, setSpeechIndex] = useState(0);
-  const [labels, setLabels] = useState<Label[]>([]);
-  const [speechId, setSpeechId] = useState(0);
-  const [speechText, setSpeechText] = useState<string | null>(null);
   const currentReadingBook =
-    CONSIGLI_DI_LETTURA_BOOKS[speechIndex] ?? CONSIGLI_DI_LETTURA_BOOKS[0];
+    CONSIGLI_DI_LETTURA_BOOKS[
+      Math.min(speechIndex, CONSIGLI_DI_LETTURA_BOOKS.length - 1)
+    ] ?? CONSIGLI_DI_LETTURA_BOOKS[0];
 
   const handleMetaChange = useCallback((meta: GoMeta) => {
     setLabels(labelsFromMeta(meta));
   }, []);
+
+  const clearRetirementTimers = useCallback(() => {
+    retirementTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    retirementTimersRef.current = [];
+  }, []);
+
+  useEffect(() => clearRetirementTimers, [clearRetirementTimers]);
 
   useEffect(() => {
     const nextText = speechLines[speechIndex] ?? speechLines[0];
@@ -400,10 +428,38 @@ export default function TheoryPage() {
     setSpeechId((id) => id + 1);
   }, [speechIndex, speechLines]);
 
+  const handleSpeechComplete = useCallback(() => {
+    if (!isReadingQuitLine || isReadingFinaleTriggered) return;
+
+    clearRetirementTimers();
+    setIsReadingFinaleTriggered(true);
+
+    retirementTimersRef.current.push(
+      window.setTimeout(() => {
+        setIsMascotVisible(false);
+      }, RETIRING_MASCOT_DELAY_MS),
+    );
+
+    retirementTimersRef.current.push(
+      window.setTimeout(() => {
+        setAreLateRulesHiding(true);
+      }, RETIRING_MASCOT_DELAY_MS + RETIRING_MASCOT_EXIT_MS),
+    );
+
+    retirementTimersRef.current.push(
+      window.setTimeout(() => {
+        setAreLateRulesHidden(true);
+      }, RETIRING_MASCOT_DELAY_MS +
+        RETIRING_MASCOT_EXIT_MS +
+        RETIRING_RULE_EXIT_MS +
+        RETIRING_RULE_STAGGER_MS * Math.max(0, RETIRING_RULE_COUNT - 1)),
+    );
+  }, [clearRetirementTimers, isReadingFinaleTriggered, isReadingQuitLine]);
+
   const canGoPrev = speechIndex > 0;
   const canGoNext = speechIndex < speechLines.length - 1;
   const speechControls =
-    speechLines.length > 1 ? (
+    speechLines.length > 1 && !isReadingFinaleTriggered ? (
       <>
         {canGoPrev ? (
           <button
@@ -427,8 +483,8 @@ export default function TheoryPage() {
             <ChevronRight className="size-4" />
           </button>
         ) : null}
-      </>
-    ) : null;
+          </>
+        ) : null;
 
   return (
     <div className="relative min-h-screen bg-[#eaf7ef] text-stone-900">
@@ -464,39 +520,62 @@ export default function TheoryPage() {
           </header>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-[260px_1fr]">
-            <aside className="flex flex-col gap-3">
+            <aside className="flex flex-col">
               {RULES.map((rule) => {
+                const isLateRule = rule.id >= RETIRING_RULE_START_ID;
+                if (isLateRule && areLateRulesHidden) return null;
+
                 const isActive = rule.id === activeRule.id;
                 const baseClass =
                   'rounded-2xl border px-4 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7adf36]';
                 const className = isActive
                   ? `${baseClass} border-[#7adf36] bg-[#7adf36] text-white shadow`
                   : `${baseClass} border-stone-200 bg-white/90 text-stone-700 hover:border-[#7adf36] hover:shadow-sm`;
+                const isLateRuleLeaving = isLateRule && areLateRulesHiding;
+                const wrapperClassName = isLateRule
+                  ? `overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                      isLateRuleLeaving
+                        ? 'pointer-events-none mb-0 max-h-0 -translate-x-6 scale-95 rotate-[-3deg] opacity-0'
+                        : 'mb-3 max-h-24 translate-x-0 scale-100 rotate-0 opacity-100'
+                    }`
+                  : 'mb-3';
+                const wrapperStyle = isLateRule
+                  ? {
+                      transitionDelay: isLateRuleLeaving
+                        ? `${(rule.id - RETIRING_RULE_START_ID) * RETIRING_RULE_STAGGER_MS}ms`
+                        : '0ms',
+                    }
+                  : undefined;
                 return (
-                  <button
+                  <div
                     key={rule.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveRuleId(rule.id);
-                      setSpeechIndex(0);
-                    }}
-                    className={className}
+                    className={wrapperClassName}
+                    style={wrapperStyle}
                   >
-                    <span className="flex items-center gap-3">
-                      <span
-                        className={`inline-flex size-7 items-center justify-center rounded-full text-xs font-semibold ${
-                          isActive
-                            ? 'bg-white/20 text-white'
-                            : 'bg-emerald-100 text-emerald-700'
-                        }`}
-                      >
-                        {rule.id}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveRuleId(rule.id);
+                        setSpeechIndex(0);
+                      }}
+                      className={className}
+                    >
+                      <span className="flex items-center gap-3">
+                        <span
+                          className={`inline-flex size-7 items-center justify-center rounded-full text-xs font-semibold ${
+                            isActive
+                              ? 'bg-white/20 text-white'
+                              : 'bg-emerald-100 text-emerald-700'
+                          }`}
+                        >
+                          {rule.id}
+                        </span>
+                        <span className="text-sm font-semibold">
+                          {rule.title}
+                        </span>
                       </span>
-                      <span className="text-sm font-semibold">
-                        {rule.title}
-                      </span>
-                    </span>
-                  </button>
+                    </button>
+                  </div>
                 );
               })}
             </aside>
@@ -510,15 +589,38 @@ export default function TheoryPage() {
                   <h2 className="text-2xl font-semibold">{activeRule.title}</h2>
                   <p className="text-stone-700">{activeRule.description}</p>
                 </div>
-                <div className="rounded-2xl border border-emerald-100 bg-white/90 p-4 shadow-sm shadow-emerald-100">
-                  <MascotIdle
-                    className="justify-start"
-                    bubbleMaxWidthClass="w-[360px] max-w-[70vw]"
-                    speechId={speechId}
-                    speechText={speechText}
-                    persistSpeech
-                    speechControls={speechControls}
-                  />
+                <div
+                  className={`overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                    isMascotVisible
+                      ? 'max-h-64 translate-y-0 scale-100 opacity-100'
+                      : 'pointer-events-none max-h-0 -translate-y-6 scale-95 opacity-0'
+                  }`}
+                >
+                  <div className="rounded-2xl border border-emerald-100 bg-white/90 p-4 shadow-sm shadow-emerald-100">
+                    <MascotIdle
+                      className="justify-start"
+                      bubbleMaxWidthClass={
+                        isReadingQuitLine
+                          ? 'w-[430px] max-w-[78vw]'
+                          : 'w-[360px] max-w-[70vw]'
+                      }
+                      bubbleClassName={
+                        isReadingQuitLine
+                          ? 'border-rose-500 ring-4 ring-rose-200 shadow-lg shadow-rose-200 animate-pulse'
+                          : ''
+                      }
+                      speechTextClassName={
+                        isReadingQuitLine
+                          ? 'text-base font-black uppercase tracking-[0.05em] text-rose-700'
+                          : ''
+                      }
+                      speechId={speechId}
+                      speechText={speechText}
+                      persistSpeech
+                      speechControls={speechControls}
+                      onSpeechComplete={handleSpeechComplete}
+                    />
+                  </div>
                 </div>
                 <div className="w-full space-y-4">
                   {isLibertaRule ? (
