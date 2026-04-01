@@ -119,7 +119,7 @@ const RULES: ReadonlyArray<Rule> = [
     title: 'Basic Tenuki Joseki',
     description:
       'Una variante di joseki in cui entrambi i giocatori fanno tenuki, lasciando il seguito locale per giocare altrove.',
-    img: '/theory/capture.svg',
+    img: '/basic%20tenuki%20joseki.png',
   },
   {
     id: 16,
@@ -609,18 +609,6 @@ export default function TheoryPage() {
                         labels={labels}
                         onMetaChange={handleMetaChange}
                         preloadSgfUrl="/sgf/schrodinger%20seki.sgf"
-                      />
-                    </div>
-                  ) : isBasicTenukiJosekiRule ? (
-                    <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-inner shadow-emerald-100">
-                      <Goban
-                        sgfMoves=""
-                        BOARD_SIZE={19}
-                        showMoveTree={false}
-                        boardOnly
-                        labels={labels}
-                        onMetaChange={handleMetaChange}
-                        preloadSgfUrl="/sgf/basic%20tenuki%20joseki.sgf"
                       />
                     </div>
                   ) : isPersistentEyeTesujiRule ? (
